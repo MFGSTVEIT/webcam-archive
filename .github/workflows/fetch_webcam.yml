@@ -2,8 +2,8 @@ name: Fetch Webcam Image
 
 on:
   schedule:
-    - cron: "*/15 * * * *"   # alle 15 Minuten
-  workflow_dispatch:          # manuelles Starten möglich
+    - cron: "*/15 8-19 * * *"   # alle 15 Minuten zwischen 08:00 und 20:00 Uhr
+  workflow_dispatch:             # manuelles Starten möglich
 
 jobs:
   fetch:
@@ -67,6 +67,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # sicherstellen, dass wir den aktuellen Stand haben
+          git pull --rebase origin main || true
+
           git add images
           git commit -m "Add webcam image $DATE $TIME" || echo "No changes"
           git push origin HEAD:main
