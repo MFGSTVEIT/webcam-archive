@@ -29,10 +29,26 @@ jobs:
         run: |
           find images/ -type d -mtime +30 -exec rm -rf {} +
 
-      - name: Update manifest.json
+      - name: Update daily manifests
+        run: |
+          for d in images/*/; do
+            if [ -d "$d" ]; then
+              FILES=$(ls -1 "$d" | grep '\.jpg$' | sort)
+              echo "{" > "$d/manifest.json"
+              echo "  \"images\": [" >> "$d/manifest.json"
+              for f in $FILES; do
+                echo "    \"$f\"," >> "$d/manifest.json"
+              done
+              sed -i '$ s/,$//' "$d/manifest.json"
+              echo "  ]" >> "$d/manifest.json"
+              echo "}" >> "$d/manifest.json"
+            fi
+          done
+
+      - name: Update global manifest.json
         run: |
           mkdir -p images
-          DAYS=$(ls -1 images | sort)
+          DAYS=$(ls -1 images | sort -r)   # neueste zuerst
           echo "{" > images/manifest.json
           echo "  \"days\": [" >> images/manifest.json
           for d in $DAYS; do
@@ -40,7 +56,7 @@ jobs:
               echo "    \"$d\"," >> images/manifest.json
             fi
           done
-          sed -i '$ s/,$//' images/manifest.json   # letztes Komma entfernen
+          sed -i '$ s/,$//' images/manifest.json
           echo "  ]" >> images/manifest.json
           echo "}" >> images/manifest.json
           cat images/manifest.json
