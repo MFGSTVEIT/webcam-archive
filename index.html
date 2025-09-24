@@ -1,1 +1,46 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <title>Webcam Archiv</title>
+  <style>
+    body { font-family: sans-serif; background: #f0f0f0; text-align: center; }
+    img { max-width: 90%; margin: 10px auto; display: block; }
+    .nav { margin: 20px; }
+    button { margin: 5px; padding: 5px 10px; }
+  </style>
+</head>
+<body>
+  <h1>📸 Webcam Archiv</h1>
+  <p>Wähle einen Tag:</p>
+  <div id="days"></div>
+  <div id="images"></div>
+
+  <script>
+    async function load() {
+      const res = await fetch("images/");
+      const text = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, "text/html");
+      const links = [...doc.querySelectorAll("a")].map(a => a.getAttribute("href")).filter(h => h.endsWith("/"));
+
+      const daysDiv = document.getElementById("days");
+      daysDiv.innerHTML = links.map(d => `<button onclick="show('${d}')">${d}</button>`).join(" ");
+    }
+
+    async function show(day) {
+      const res = await fetch("images/" + day);
+      const text = await res.text();
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(text, "text/html");
+      const links = [...doc.querySelectorAll("a")].map(a => a.getAttribute("href")).filter(h => h.endsWith(".jpg"));
+
+      const imagesDiv = document.getElementById("images");
+      imagesDiv.innerHTML = links.map(img => `<img src="images/${day}${img}" alt="${img}">`).join("");
+    }
+
+    load();
+  </script>
+</body>
+</html>
 
