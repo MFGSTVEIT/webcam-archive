@@ -36,41 +36,6 @@
             margin: 0;
         }
 
-.info-box {
-    background: #ffffff;
-    padding: 10px 15px;        /* kleiner als vorher 20px */
-    border-radius: 8px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.8);
-    text-align: center;
-    width: 60%;                /* kleiner als vorher 80% */
-    max-width: 400px;          /* kleiner als vorher 600px */
-    margin-bottom: 15px;       /* etwas weniger Abstand */
-}
-
-
-        .info-box p {
-            margin: 10px 0;
-            font-size: 18px;
-            color: #555;
-        }
-
-        .info-box .highlight {
-            font-size: 1.7em;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        select {
-            padding: 8px;
-            font-size: 16px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
         #slideshow img {
             max-width: 90%;
             height: auto;
@@ -78,6 +43,25 @@
             margin: 20px auto;
             border-radius: 3px;
             box-shadow: 0 4px 8px rgba(0,0,0,1.0);
+        }
+
+        .info-box {
+            background: #ffffff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.8);
+            text-align: center;
+            width: 60%;
+            max-width: 400px;
+            margin: 15px auto 25px auto; /* unter dem Bild */
+        }
+
+        select {
+            padding: 8px;
+            font-size: 16px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
         }
 
         .controls {
@@ -107,14 +91,12 @@
 
         @media (max-width: 768px) {
             h1 { font-size: 2em; }
-            .info-box p { font-size: 16px; }
-            .info-box .highlight { font-size: 1.2em; }
+            .info-box select { font-size: 14px; }
             .header img { max-height: 80px; }
         }
 
         @media (min-width: 1024px) {
             h1 { font-size: 3em; }
-            .info-box p { font-size: 20px; }
         }
     </style>
 </head>
@@ -124,15 +106,16 @@
         <h1>MFG-St.Veit Webcam Archiv</h1>
     </div>
 
+    <div id="slideshow">
+        <img id="currentImg" src="" alt="Kein Bild geladen">
+    </div>
+
+    <!-- Tag-Auswahl unter dem Bild -->
     <div class="info-box">
         <label for="daySelect">Tag auswählen:</label><br>
         <select id="daySelect" onchange="loadDay(this.value)">
             <option value="">-- bitte wählen --</option>
         </select>
-    </div>
-
-    <div id="slideshow">
-        <img id="currentImg" src="" alt="Kein Bild geladen">
     </div>
 
     <div class="controls">
