@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo (mit vollständiger History)
+      - name: Checkout Repo (vollständige History)
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -54,7 +54,7 @@ jobs:
       - name: Update global manifest.json
         run: |
           mkdir -p images
-          DAYS=$(ls -1 images | sort -r)   # neueste zuerst
+          DAYS=$(ls -1 images | sort -r)
           echo "{" > images/manifest.json
           echo "  \"days\": [" >> images/manifest.json
           for d in $DAYS; do
@@ -67,16 +67,19 @@ jobs:
           echo "}" >> images/manifest.json
           cat images/manifest.json
 
-      - name: Commit and Push Changes
+      - name: Commit and Push Changes with Retry
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          git fetch origin main
-          git rebase origin/main || true
-
           git add images
           git commit -m "Add webcam image $DATE $TIME" || echo "No changes"
-          git push origin HEAD:main
+
+          # Push mit bis zu 3 Retries bei Konflikten
+          for i in 1 2 3; do
+            git pull --rebase origin main && git push origin HEAD:main && break
+            echo "Push fehlgeschlagen, retry ($i/3)..."
+            sleep 5
+          done
