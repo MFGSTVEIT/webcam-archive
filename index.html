@@ -78,7 +78,7 @@
     let currentIndex = 0;
     let slideshowInterval = null;
 
-    // Liste der Tage aus manifest.json laden
+    // Globale Liste der Tage laden
     async function loadDays() {
       try {
         const res = await fetch("images/manifest.json");
@@ -91,25 +91,33 @@
           option.textContent = d;
           daySelect.appendChild(option);
         });
+
+        // Standardmäßig den neuesten Tag laden
+        if (data.days.length > 0) {
+          daySelect.value = data.days[0] + "/";
+          loadDay(data.days[0] + "/");
+        }
       } catch (e) {
-        console.error("Fehler beim Laden der manifest.json:", e);
+        console.error("Fehler beim Laden der globalen manifest.json:", e);
       }
     }
 
     // Bilder eines Tages laden
     async function loadDay(day) {
       if (!day) return;
-      const res = await fetch(`images/${day}`);
-      const text = await res.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(text, "text/html");
-      images = [...doc.querySelectorAll("a")]
-        .map(a => a.getAttribute("href"))
-        .filter(h => h.endsWith(".jpg"))
-        .map(img => `images/${day}${img}`);
+      try {
+        const res = await fetch(`images/${day}manifest.json`);
+        const data = await res.json();
+        images = data.images.map(img => `images/${day}${img}`);
 
-      currentIndex = 0;
-      showImage();
+        currentIndex = 0;
+        showImage();
+      } catch (e) {
+        console.error("Fehler beim Laden der Bilder:", e);
+        images = [];
+        document.getElementById("currentImg").src = "";
+        document.getElementById("currentImg").alt = "Keine Bilder gefunden";
+      }
     }
 
     function showImage() {
