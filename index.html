@@ -78,36 +78,35 @@
     let currentIndex = 0;
     let slideshowInterval = null;
 
-    // Liste der verfügbaren Tage laden
+    // Liste der Tage aus manifest.json laden
     async function loadDays() {
-      const res = await fetch("images/");
-      const text = await res.text();
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(text, "text/html");
-      const links = [...doc.querySelectorAll("a")]
-        .map(a => a.getAttribute("href"))
-        .filter(h => h.endsWith("/"));
+      try {
+        const res = await fetch("images/manifest.json");
+        const data = await res.json();
 
-      const daySelect = document.getElementById("daySelect");
-      links.forEach(d => {
-        const option = document.createElement("option");
-        option.value = d;
-        option.textContent = d.replace(/\//g, "");
-        daySelect.appendChild(option);
-      });
+        const daySelect = document.getElementById("daySelect");
+        data.days.forEach(d => {
+          const option = document.createElement("option");
+          option.value = d + "/";
+          option.textContent = d;
+          daySelect.appendChild(option);
+        });
+      } catch (e) {
+        console.error("Fehler beim Laden der manifest.json:", e);
+      }
     }
 
     // Bilder eines Tages laden
     async function loadDay(day) {
       if (!day) return;
-      const res = await fetch("images/" + day);
+      const res = await fetch(`images/${day}`);
       const text = await res.text();
       const parser = new DOMParser();
       const doc = parser.parseFromString(text, "text/html");
       images = [...doc.querySelectorAll("a")]
         .map(a => a.getAttribute("href"))
         .filter(h => h.endsWith(".jpg"))
-        .map(img => "images/" + day + img);
+        .map(img => `images/${day}${img}`);
 
       currentIndex = 0;
       showImage();
