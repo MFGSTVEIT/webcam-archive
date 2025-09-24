@@ -89,7 +89,6 @@
             margin-top: 15px;
         }
 
-        /* Media Queries für Mobilgeräte angepasst */
         @media (max-width: 768px) {
             h1 { font-size: 1.0em; }
             .info-box select { font-size: 14px; }
@@ -104,7 +103,7 @@
 <body>
     <div class="header">
         <img src="logo.png" alt="Logo">
-        <h1>MFG-St.Veit Archiv</h1>
+        <h1>MFG-St.Veit Webcam Archiv</h1>
     </div>
 
     <div id="slideshow">
@@ -139,16 +138,30 @@
                 const res = await fetch("images/manifest.json");
                 const data = await res.json();
                 const daySelect = document.getElementById("daySelect");
+
+                // Heutiges Datum im Ordnerformat YYYY-MM-DD
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0');
+                const dd = String(today.getDate()).padStart(2, '0');
+                const currentDay = `${yyyy}-${mm}-${dd}/`;
+
                 data.days.forEach(d => {
                     const option = document.createElement("option");
                     option.value = d + "/";
                     option.textContent = d;
                     daySelect.appendChild(option);
                 });
-                if (data.days.length > 0) {
+
+                // Voreinstellung auf heutiges Datum, falls vorhanden, sonst neuester Tag
+                if (data.days.includes(currentDay.slice(0, -1))) {
+                    daySelect.value = currentDay;
+                } else if (data.days.length > 0) {
                     daySelect.value = data.days[0] + "/";
-                    loadDay(data.days[0] + "/");
                 }
+
+                loadDay(daySelect.value);
+
             } catch(e) {
                 console.error("Fehler beim Laden der globalen manifest.json:", e);
             }
