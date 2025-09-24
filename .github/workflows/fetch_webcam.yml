@@ -1,1 +1,39 @@
+name: Fetch Webcam Image
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # alle 15 Minuten
+  workflow_dispatch:          # manuelles Starten möglich
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Set Date Variables
+        run: |
+          echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
+          echo "TIME=$(date +'%H%M')" >> $GITHUB_ENV
+
+      - name: Create Directory for Today
+        run: mkdir -p images/$DATE
+
+      - name: Download Webcam Image
+        run: |
+          curl -s -o images/$DATE/$TIME.jpg https://raw.githubusercontent.com/MFGSTVEIT/Webcam/master/webcam.jpg
+
+      - name: Cleanup Old Directories (older than 30 days)
+        run: |
+          find images/ -type d -mtime +30 -exec rm -rf {} +
+
+      - name: Commit and Push Changes
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add images
+          git commit -m "Add webcam image $DATE $TIME" || echo "No changes"
+          git push
 
