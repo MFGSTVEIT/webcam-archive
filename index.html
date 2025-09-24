@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MFG-St.Veit Archiv</title>
+    <title>MFG-St.Veit Webcam Archiv</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -30,7 +30,7 @@
 
         h1 {
             color: #333;
-            font-size: 1.0em;
+            font-size: 1.0em;  /* kleine Schrift überall */
             text-transform: uppercase;
             letter-spacing: 2px;
             margin: 0;
@@ -53,7 +53,7 @@
             text-align: center;
             width: 60%;
             max-width: 400px;
-            margin: 15px auto 25px auto; /* unter dem Bild */
+            margin: 15px auto 25px auto;
         }
 
         select {
@@ -89,14 +89,15 @@
             margin-top: 15px;
         }
 
+        /* Media Queries für Mobilgeräte angepasst */
         @media (max-width: 768px) {
-            h1 { font-size: 2em; }
+            h1 { font-size: 1.0em; }
             .info-box select { font-size: 14px; }
             .header img { max-height: 80px; }
         }
 
         @media (min-width: 1024px) {
-            h1 { font-size: 3em; }
+            h1 { font-size: 1.0em; }
         }
     </style>
 </head>
