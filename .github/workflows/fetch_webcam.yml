@@ -29,11 +29,28 @@ jobs:
         run: |
           find images/ -type d -mtime +30 -exec rm -rf {} +
 
-      - name: Commit and Push Changes
+      - name: Update manifest.json
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
+          mkdir -p images
+          DAYS=$(ls -1 images | sort)
+          echo "{" > images/manifest.json
+          echo "  \"days\": [" >> images/manifest.json
+          for d in $DAYS; do
+            if [ -d "images/$d" ]; then
+              echo "    \"$d\"," >> images/manifest.json
+            fi
+          done
+          sed -i '$ s/,$//' images/manifest.json   # letztes Komma entfernen
+          echo "  ]" >> images/manifest.json
+          echo "}" >> images/manifest.json
+          cat images/manifest.json
+
+      - name: Commit and Push Changes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add images
           git commit -m "Add webcam image $DATE $TIME" || echo "No changes"
-          git push
-
+          git push origin HEAD:main
