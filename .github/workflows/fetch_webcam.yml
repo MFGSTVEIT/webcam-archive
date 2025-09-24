@@ -10,8 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repo (mit vollständiger History)
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Set Date Variables
         run: |
@@ -68,8 +70,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          # sicherstellen, dass wir den aktuellen Stand haben
-          git pull --rebase origin main || true
+          # aktuellen Stand holen und rebasen
+          git fetch origin main
+          git rebase origin/main || true
 
           git add images
           git commit -m "Add webcam image $DATE $TIME" || echo "No changes"
