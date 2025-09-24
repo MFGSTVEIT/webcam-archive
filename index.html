@@ -1,152 +1,220 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8">
-  <title>Webcam Archiv</title>
-  <style>
-    body { 
-      font-family: Arial, sans-serif; 
-      background: #f7f7f7; 
-      margin: 0; 
-      padding: 0; 
-      text-align: center; 
-    }
-    header {
-      background: #333; 
-      color: white; 
-      padding: 15px; 
-    }
-    h1 { margin: 0; }
-    #days {
-      margin: 20px;
-    }
-    select {
-      padding: 8px;
-      font-size: 16px;
-    }
-    #slideshow {
-      margin-top: 20px;
-    }
-    img {
-      max-width: 90%;
-      max-height: 80vh;
-      border-radius: 10px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-    }
-    .controls {
-      margin: 15px;
-    }
-    button {
-      padding: 10px 20px;
-      margin: 5px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      background: #333;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #555;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MFG-St.Veit Webcam Archiv</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2efef;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header img {
+            max-height: 150px;
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0;
+        }
+
+        .info-box {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.8);
+            text-align: center;
+            width: 80%;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            margin: 10px 0;
+            font-size: 18px;
+            color: #555;
+        }
+
+        .info-box .highlight {
+            font-size: 1.7em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        select {
+            padding: 8px;
+            font-size: 16px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #slideshow img {
+            max-width: 90%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            border-radius: 3px;
+            box-shadow: 0 4px 8px rgba(0,0,0,1.0);
+        }
+
+        .controls {
+            margin: 15px;
+        }
+
+        .controls button {
+            padding: 10px 20px;
+            margin: 5px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            background: #333;
+            color: white;
+            cursor: pointer;
+        }
+
+        .controls button:hover {
+            background: #555;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 0.8em;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            .info-box p { font-size: 16px; }
+            .info-box .highlight { font-size: 1.2em; }
+            .header img { max-height: 80px; }
+        }
+
+        @media (min-width: 1024px) {
+            h1 { font-size: 3em; }
+            .info-box p { font-size: 20px; }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>📸 Webcam Archiv</h1>
-  </header>
+    <div class="header">
+        <img src="logo.png" alt="Logo">
+        <h1>MFG-St.Veit Webcam Archiv</h1>
+    </div>
 
-  <div id="days">
-    <label for="daySelect">Tag auswählen:</label>
-    <select id="daySelect" onchange="loadDay(this.value)">
-      <option value="">-- bitte wählen --</option>
-    </select>
-  </div>
+    <div class="info-box">
+        <label for="daySelect">Tag auswählen:</label><br>
+        <select id="daySelect" onchange="loadDay(this.value)">
+            <option value="">-- bitte wählen --</option>
+        </select>
+    </div>
 
-  <div id="slideshow">
-    <img id="currentImg" src="" alt="Kein Bild geladen">
-  </div>
+    <div id="slideshow">
+        <img id="currentImg" src="" alt="Kein Bild geladen">
+    </div>
 
-  <div class="controls">
-    <button onclick="prevImage()">⏮ Zurück</button>
-    <button onclick="toggleSlideshow()">▶️/⏸ Slideshow</button>
-    <button onclick="nextImage()">⏭ Weiter</button>
-  </div>
+    <div class="controls">
+        <button onclick="prevImage()">⏮ Zurück</button>
+        <button onclick="toggleSlideshow()">▶️/⏸ Slideshow</button>
+        <button onclick="nextImage()">⏭ Weiter</button>
+    </div>
 
-  <script>
-    let images = [];
-    let currentIndex = 0;
-    let slideshowInterval = null;
+    <div class="footer">
+        <p id="lastUpdate">Lade Bilder…</p>
+    </div>
 
-    // Globale Liste der Tage laden
-    async function loadDays() {
-      try {
-        const res = await fetch("images/manifest.json");
-        const data = await res.json();
+    <script>
+        let images = [];
+        let currentIndex = 0;
+        let slideshowInterval = null;
 
-        const daySelect = document.getElementById("daySelect");
-        data.days.forEach(d => {
-          const option = document.createElement("option");
-          option.value = d + "/";
-          option.textContent = d;
-          daySelect.appendChild(option);
-        });
-
-        // Standardmäßig den neuesten Tag laden
-        if (data.days.length > 0) {
-          daySelect.value = data.days[0] + "/";
-          loadDay(data.days[0] + "/");
+        async function loadDays() {
+            try {
+                const res = await fetch("images/manifest.json");
+                const data = await res.json();
+                const daySelect = document.getElementById("daySelect");
+                data.days.forEach(d => {
+                    const option = document.createElement("option");
+                    option.value = d + "/";
+                    option.textContent = d;
+                    daySelect.appendChild(option);
+                });
+                if (data.days.length > 0) {
+                    daySelect.value = data.days[0] + "/";
+                    loadDay(data.days[0] + "/");
+                }
+            } catch(e) {
+                console.error("Fehler beim Laden der globalen manifest.json:", e);
+            }
         }
-      } catch (e) {
-        console.error("Fehler beim Laden der globalen manifest.json:", e);
-      }
-    }
 
-    // Bilder eines Tages laden
-    async function loadDay(day) {
-      if (!day) return;
-      try {
-        const res = await fetch(`images/${day}manifest.json`);
-        const data = await res.json();
-        images = data.images.map(img => `images/${day}${img}`);
+        async function loadDay(day) {
+            if (!day) return;
+            try {
+                const res = await fetch(`images/${day}manifest.json`);
+                const data = await res.json();
+                images = data.images.map(img => `images/${day}${img}`);
+                currentIndex = 0;
+                showImage();
+                const lastUpdate = new Date();
+                document.getElementById("lastUpdate").textContent =
+                    `Aktualisiert am ${lastUpdate.toLocaleString()}`;
+            } catch(e) {
+                console.error("Fehler beim Laden der Bilder:", e);
+                images = [];
+                document.getElementById("currentImg").src = "";
+                document.getElementById("currentImg").alt = "Keine Bilder gefunden";
+            }
+        }
 
-        currentIndex = 0;
-        showImage();
-      } catch (e) {
-        console.error("Fehler beim Laden der Bilder:", e);
-        images = [];
-        document.getElementById("currentImg").src = "";
-        document.getElementById("currentImg").alt = "Keine Bilder gefunden";
-      }
-    }
+        function showImage() {
+            if (images.length === 0) return;
+            document.getElementById("currentImg").src = images[currentIndex];
+        }
 
-    function showImage() {
-      if (images.length === 0) return;
-      document.getElementById("currentImg").src = images[currentIndex];
-    }
+        function nextImage() {
+            if (images.length === 0) return;
+            currentIndex = (currentIndex + 1) % images.length;
+            showImage();
+        }
 
-    function nextImage() {
-      if (images.length === 0) return;
-      currentIndex = (currentIndex + 1) % images.length;
-      showImage();
-    }
+        function prevImage() {
+            if (images.length === 0) return;
+            currentIndex = (currentIndex - 1 + images.length) % images.length;
+            showImage();
+        }
 
-    function prevImage() {
-      if (images.length === 0) return;
-      currentIndex = (currentIndex - 1 + images.length) % images.length;
-      showImage();
-    }
+        function toggleSlideshow() {
+            if (slideshowInterval) {
+                clearInterval(slideshowInterval);
+                slideshowInterval = null;
+            } else {
+                slideshowInterval = setInterval(nextImage, 2000);
+            }
+        }
 
-    function toggleSlideshow() {
-      if (slideshowInterval) {
-        clearInterval(slideshowInterval);
-        slideshowInterval = null;
-      } else {
-        slideshowInterval = setInterval(nextImage, 2000); // alle 2 Sekunden
-      }
-    }
-
-    loadDays();
-  </script>
+        loadDays();
+    </script>
 </body>
 </html>
