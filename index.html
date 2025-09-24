@@ -4,43 +4,142 @@
   <meta charset="UTF-8">
   <title>Webcam Archiv</title>
   <style>
-    body { font-family: sans-serif; background: #f0f0f0; text-align: center; }
-    img { max-width: 90%; margin: 10px auto; display: block; }
-    .nav { margin: 20px; }
-    button { margin: 5px; padding: 5px 10px; }
+    body { 
+      font-family: Arial, sans-serif; 
+      background: #f7f7f7; 
+      margin: 0; 
+      padding: 0; 
+      text-align: center; 
+    }
+    header {
+      background: #333; 
+      color: white; 
+      padding: 15px; 
+    }
+    h1 { margin: 0; }
+    #days {
+      margin: 20px;
+    }
+    select {
+      padding: 8px;
+      font-size: 16px;
+    }
+    #slideshow {
+      margin-top: 20px;
+    }
+    img {
+      max-width: 90%;
+      max-height: 80vh;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .controls {
+      margin: 15px;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background: #333;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #555;
+    }
   </style>
 </head>
 <body>
-  <h1>📸 Webcam Archiv</h1>
-  <p>Wähle einen Tag:</p>
-  <div id="days"></div>
-  <div id="images"></div>
+  <header>
+    <h1>📸 Webcam Archiv</h1>
+  </header>
+
+  <div id="days">
+    <label for="daySelect">Tag auswählen:</label>
+    <select id="daySelect" onchange="loadDay(this.value)">
+      <option value="">-- bitte wählen --</option>
+    </select>
+  </div>
+
+  <div id="slideshow">
+    <img id="currentImg" src="" alt="Kein Bild geladen">
+  </div>
+
+  <div class="controls">
+    <button onclick="prevImage()">⏮ Zurück</button>
+    <button onclick="toggleSlideshow()">▶️/⏸ Slideshow</button>
+    <button onclick="nextImage()">⏭ Weiter</button>
+  </div>
 
   <script>
-    async function load() {
+    let images = [];
+    let currentIndex = 0;
+    let slideshowInterval = null;
+
+    // Liste der verfügbaren Tage laden
+    async function loadDays() {
       const res = await fetch("images/");
       const text = await res.text();
       const parser = new DOMParser();
       const doc = parser.parseFromString(text, "text/html");
-      const links = [...doc.querySelectorAll("a")].map(a => a.getAttribute("href")).filter(h => h.endsWith("/"));
+      const links = [...doc.querySelectorAll("a")]
+        .map(a => a.getAttribute("href"))
+        .filter(h => h.endsWith("/"));
 
-      const daysDiv = document.getElementById("days");
-      daysDiv.innerHTML = links.map(d => `<button onclick="show('${d}')">${d}</button>`).join(" ");
+      const daySelect = document.getElementById("daySelect");
+      links.forEach(d => {
+        const option = document.createElement("option");
+        option.value = d;
+        option.textContent = d.replace(/\//g, "");
+        daySelect.appendChild(option);
+      });
     }
 
-    async function show(day) {
+    // Bilder eines Tages laden
+    async function loadDay(day) {
+      if (!day) return;
       const res = await fetch("images/" + day);
       const text = await res.text();
       const parser = new DOMParser();
       const doc = parser.parseFromString(text, "text/html");
-      const links = [...doc.querySelectorAll("a")].map(a => a.getAttribute("href")).filter(h => h.endsWith(".jpg"));
+      images = [...doc.querySelectorAll("a")]
+        .map(a => a.getAttribute("href"))
+        .filter(h => h.endsWith(".jpg"))
+        .map(img => "images/" + day + img);
 
-      const imagesDiv = document.getElementById("images");
-      imagesDiv.innerHTML = links.map(img => `<img src="images/${day}${img}" alt="${img}">`).join("");
+      currentIndex = 0;
+      showImage();
     }
 
-    load();
+    function showImage() {
+      if (images.length === 0) return;
+      document.getElementById("currentImg").src = images[currentIndex];
+    }
+
+    function nextImage() {
+      if (images.length === 0) return;
+      currentIndex = (currentIndex + 1) % images.length;
+      showImage();
+    }
+
+    function prevImage() {
+      if (images.length === 0) return;
+      currentIndex = (currentIndex - 1 + images.length) % images.length;
+      showImage();
+    }
+
+    function toggleSlideshow() {
+      if (slideshowInterval) {
+        clearInterval(slideshowInterval);
+        slideshowInterval = null;
+      } else {
+        slideshowInterval = setInterval(nextImage, 2000); // alle 2 Sekunden
+      }
+    }
+
+    loadDays();
   </script>
 </body>
 </html>
-
