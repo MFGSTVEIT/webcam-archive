@@ -33,13 +33,13 @@
             max-width: 90%;
             height: auto;
             display: block;
-            margin: 10px auto;  /* Abstand Bild kleiner */
+            margin: 10px auto;  /* Abstand Desktop */
             border-radius: 3px;
             box-shadow: 0 4px 8px rgba(0,0,0,1.0);
         }
 
         .controls {
-            margin: 5px;  /* kleinerer Abstand */
+            margin: 5px;  /* Abstand Desktop */
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
@@ -68,7 +68,7 @@
             text-align: center;
             width: 60%;
             max-width: 400px;
-            margin: 10px auto 20px auto; /* weniger Abstand */
+            margin: 10px auto 20px auto;
         }
 
         select {
@@ -92,6 +92,8 @@
                 font-size: 12px;
                 padding: 6px 10px;
             }
+            #slideshow img { margin: 5px auto; }   /* kleiner Abstand */
+            .controls { margin: 2px; }             /* Buttons näher ran */
             .info-box select { font-size: 14px; }
         }
 
@@ -116,7 +118,6 @@
         <button onclick="nextImage()">⏭ Weiter</button>
     </div>
 
-    <!-- Tag-Auswahl jetzt unter den Buttons -->
     <div class="info-box">
         <label for="daySelect">Tag auswählen:</label><br>
         <select id="daySelect" onchange="loadDay(this.value)">
@@ -139,7 +140,6 @@
                 const data = await res.json();
                 const daySelect = document.getElementById("daySelect");
 
-                // Heutiges Datum im Ordnerformat YYYY-MM-DD
                 const today = new Date();
                 const yyyy = today.getFullYear();
                 const mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -153,7 +153,6 @@
                     daySelect.appendChild(option);
                 });
 
-                // Voreinstellung auf heutiges Datum, falls vorhanden, sonst neuester Tag
                 if (data.days.includes(currentDay.slice(0, -1))) {
                     daySelect.value = currentDay;
                 } else if (data.days.length > 0) {
