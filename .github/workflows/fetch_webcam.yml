@@ -2,23 +2,15 @@ name: Fetch Webcam Image
 
 on:
   schedule:
-    # ⏰ Debug: jede volle Stunde UTC (zum Testen)
-    - cron: "0 * * * *"
+    # 🌞 Sommerzeit (März–Oktober, UTC+2)
+    - cron: "*/5 6-17 * 3,4,5,6,7,8,9,10 *"  # alle 5 Minuten 08:00–19:55 MESZ
+    - cron: "5 17 * 3,4,5,6,7,8,9,10 *"     # 20:05 MESZ
 
-    # 🌞 Sommerzeit (März–Oktober, UTC+2 → 08:05–20:05 MESZ)
-    - cron: "5,20,35,50 6-17 * 3-10 *"   # 08:05–19:50 MESZ
-    - cron: "5 18 * 3-10 *"              # 20:05 MESZ
+    # ❄️ Winterzeit (November–Februar, UTC+1)
+    - cron: "*/5 7-18 * 11,12,1,2 *"        # alle 5 Minuten 08:00–19:55 MEZ
+    - cron: "5 18 * 11,12,1,2 *"            # 20:05 MEZ
 
-    # ❄️ Winterzeit (Nov, Dez, UTC+1 → 08:05–20:05 MEZ)
-    - cron: "5,20,35,50 7-18 * 11,12 *"  # 08:05–19:50 MEZ
-    - cron: "5 19 * 11,12 *"             # 20:05 MEZ
-
-    # ❄️ Winterzeit (Jan, Feb, UTC+1 → 08:05–20:05 MEZ)
-    - cron: "5,20,35,50 7-18 * 1,2 *"    # 08:05–19:50 MEZ
-    - cron: "5 19 * 1,2 *"               # 20:05 MEZ
-
-
-  workflow_dispatch:    # Manuelles Starten möglich
+    workflow_dispatch:                      # manuelles Starten möglich
 
 concurrency:
   group: webcam-archive
@@ -31,29 +23,44 @@ jobs:
       contents: write
 
     steps:
-      - name: Debug Start
-        run: |
-          echo "Workflow gestartet!"
-          echo "Aktuelle UTC-Zeit: $(date -u)"
-          echo "Aktuelle lokale Zeit: $(date)"
-          echo "Auslöser: ${{ github.event_name }}"
-
       - name: Checkout Repo (vollständige History)
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Set Date Variables
+      - name: Set Date Variable
         run: |
-          echo "DATE=$(date +'%Y-%m-%d')" >> $GITHUB_ENV
-          echo "TIME=$(date +'%H%M')" >> $GITHUB_ENV
+          DATE=$(date +'%Y-%m-%d')
+          echo "DATE=$DATE" >> $GITHUB_ENV
 
-      - name: Create Directory for Today
-        run: mkdir -p images/$DATE
-
-      - name: Download Webcam Image
+      - name: Download current webcam.jpg and get real timestamp
         run: |
-          curl -s -o images/$DATE/$TIME.jpg https://raw.githubusercontent.com/MFGSTVEIT/Webcam/master/webcam.jpg
+          URL="https://raw.githubusercontent.com/MFGSTVEIT/Webcam/master/webcam.jpg"
+          TMP_IMG=$(mktemp /tmp/webcam-XXXX.jpg)
+          curl -s -o $TMP_IMG $URL
+          echo "TMP_IMG=$TMP_IMG" >> $GITHUB_ENV
+
+          # Timestamp aus Last-Modified Header
+          LASTMOD=$(curl -sI $URL | grep -i '^last-modified:' | cut -d' ' -f2-)
+          if [ -z "$LASTMOD" ]; then
+            # fallback: aktuelle UTC Zeit
+            TIME=$(date -u +'%H%M')
+          else
+            TIME=$(date -u -d "$LASTMOD" +'%H%M')
+          fi
+          echo "TIME=$TIME" >> $GITHUB_ENV
+          echo "Real timestamp: $TIME from $LASTMOD"
+
+      - name: Check if image already exists
+        run: |
+          TARGET="images/$DATE/$TIME.jpg"
+          if [ -f "$TARGET" ]; then
+            echo "Image $TARGET already exists – skipping commit."
+            exit 0
+          fi
+          mkdir -p images/$DATE
+          mv $TMP_IMG "$TARGET"
+          echo "Saved new image: $TARGET"
 
       - name: Cleanup Old Directories (older than 30 days)
         run: |
@@ -67,7 +74,7 @@ jobs:
               echo "{" > "$d/manifest.json"
               echo "  \"images\": [" >> "$d/manifest.json"
               for f in $FILES; do
-                echo "    \"$f\"," >> "$d/manifest.json"
+                echo "    \"$(basename $f)\"," >> "$d/manifest.json"
               done
               sed -i '$ s/,$//' "$d/manifest.json"
               echo "  ]" >> "$d/manifest.json"
@@ -89,9 +96,8 @@ jobs:
           sed -i '$ s/,$//' images/manifest.json
           echo "  ]" >> images/manifest.json
           echo "}" >> images/manifest.json
-          cat images/manifest.json
 
-      - name: Commit and Push Changes with Retry
+      - name: Commit and Push Changes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -101,7 +107,7 @@ jobs:
           git add images
           git commit -m "Add webcam image $DATE $TIME" || echo "No changes"
 
-          # Push mit bis zu 3 Retries bei Konflikten
+          # Push mit Retry
           for i in 1 2 3; do
             git pull --rebase origin main && git push origin HEAD:main && break
             echo "Push fehlgeschlagen, retry ($i/3)..."
