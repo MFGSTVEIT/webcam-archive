@@ -33,13 +33,13 @@
             max-width: 90%;
             height: auto;
             display: block;
-            margin: 10px auto;  /* Abstand Desktop */
+            margin: 10px auto;
             border-radius: 3px;
             box-shadow: 0 4px 8px rgba(0,0,0,1.0);
         }
 
         .controls {
-            margin: 5px;  /* Abstand Desktop */
+            margin: 5px;
             display: flex;
             flex-wrap: wrap;
             justify-content: center;
@@ -85,15 +85,15 @@
             margin-top: 10px;
         }
 
-        /* Handy-Ansicht */
+        /* Handy */
         @media (max-width: 768px) {
             h1 { font-size: 1.2em; }
             .controls button {
                 font-size: 12px;
                 padding: 6px 10px;
             }
-            #slideshow img { margin: 5px auto; }   /* kleiner Abstand */
-            .controls { margin: 2px; }             /* Buttons näher ran */
+            #slideshow img { margin: 5px auto; }
+            .controls { margin: 2px; }
             .info-box select { font-size: 14px; }
         }
 
@@ -116,6 +116,7 @@
         <button onclick="prevImage()">⏮ Zurück</button>
         <button onclick="toggleSlideshow()">▶️/⏸ Slideshow</button>
         <button onclick="nextImage()">⏭ Weiter</button>
+        <button onclick="restartSlideshow()">↻ Neustart</button>
     </div>
 
     <div class="info-box">
@@ -192,14 +193,26 @@
 
         function nextImage() {
             if (images.length === 0) return;
-            currentIndex = (currentIndex + 1) % images.length;
-            showImage();
+
+            if (currentIndex < images.length - 1) {
+                currentIndex++;
+                showImage();
+            } else {
+                // Slideshow beenden, wenn letztes Bild erreicht
+                if (slideshowInterval) {
+                    clearInterval(slideshowInterval);
+                    slideshowInterval = null;
+                    console.log("Slideshow beendet – letztes Bild erreicht");
+                }
+            }
         }
 
         function prevImage() {
             if (images.length === 0) return;
-            currentIndex = (currentIndex - 1 + images.length) % images.length;
-            showImage();
+            if (currentIndex > 0) {
+                currentIndex--;
+                showImage();
+            }
         }
 
         function toggleSlideshow() {
@@ -209,6 +222,16 @@
             } else {
                 slideshowInterval = setInterval(nextImage, 2000);
             }
+        }
+
+        function restartSlideshow() {
+            currentIndex = 0;
+            showImage();
+            if (slideshowInterval) {
+                clearInterval(slideshowInterval);
+            }
+            slideshowInterval = setInterval(nextImage, 2000);
+            console.log("Slideshow neu gestartet");
         }
 
         loadDays();
