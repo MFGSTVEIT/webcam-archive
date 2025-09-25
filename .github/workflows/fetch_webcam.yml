@@ -2,9 +2,10 @@ name: Fetch Webcam Image
 
 on:
   schedule:
-    - cron: "*/15 8-19 * * *"   # alle 15 Minuten zwischen 08:00 und 20:00 Uhr
+    - cron: "5,20,35,50 8-19 * * *"
+    - cron: "5 20 * * *"
   workflow_dispatch:             # manuelles Starten möglich
-
+  
 concurrency:
   group: webcam-archive
   cancel-in-progress: false
