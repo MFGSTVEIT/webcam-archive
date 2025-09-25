@@ -21,16 +21,9 @@
             margin-bottom: 20px;
         }
 
-        .header img {
-            max-height: 150px;
-            border-radius: 50%;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            margin-bottom: 10px;
-        }
-
         h1 {
             color: #333;
-            font-size: 2.0em;  /* kleine Schrift überall */
+            font-size: 2.0em;
             text-transform: uppercase;
             letter-spacing: 2px;
             margin: 0;
@@ -66,6 +59,9 @@
 
         .controls {
             margin: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
         }
 
         .controls button {
@@ -89,20 +85,24 @@
             margin-top: 15px;
         }
 
+        /* Handy-Ansicht */
         @media (max-width: 768px) {
-            h1 { font-size: 1.0em; }
+            h1 { font-size: 1.2em; }
             .info-box select { font-size: 14px; }
-            .header img { max-height: 80px; }
+            .controls button {
+                font-size: 12px;
+                padding: 6px 10px;
+            }
         }
 
+        /* Desktop */
         @media (min-width: 1024px) {
-            h1 { font-size: 1.0em; }
+            h1 { font-size: 2.0em; }
         }
     </style>
 </head>
 <body>
     <div class="header">
-        /* <img src="logo.png" alt="Logo">  Logo */
         <h1>MFG-St.Veit Archiv</h1>
     </div>
 
