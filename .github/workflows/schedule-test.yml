@@ -1,0 +1,18 @@
+name: Schedule Test
+
+on:
+  schedule:
+    # alle 5 Minuten
+    - cron: "*/5 * * * *"
+  workflow_dispatch:   # zum manuellen Testen
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print time
+        run: |
+          echo "Hello from schedule test!"
+          echo "UTC Zeit: $(date -u)"
+          echo "Lokale Zeit: $(date)"
+          echo "Trigger: ${{ github.event_name }}"
