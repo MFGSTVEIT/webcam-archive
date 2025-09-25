@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    retention-days: 7   # Logs/Runs werden nach 7 Tagen gelöscht
+
 
     steps:
       - name: Checkout Repo (vollständige History)
