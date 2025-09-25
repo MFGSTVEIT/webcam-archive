@@ -38,25 +38,6 @@
             box-shadow: 0 4px 8px rgba(0,0,0,1.0);
         }
 
-        .info-box {
-            background: #ffffff;
-            padding: 10px 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.8);
-            text-align: center;
-            width: 60%;
-            max-width: 400px;
-            margin: 15px auto 25px auto;
-        }
-
-        select {
-            padding: 8px;
-            font-size: 16px;
-            margin-top: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
         .controls {
             margin: 15px;
             display: flex;
@@ -79,6 +60,25 @@
             background: #555;
         }
 
+        .info-box {
+            background: #ffffff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.8);
+            text-align: center;
+            width: 60%;
+            max-width: 400px;
+            margin: 15px auto 25px auto;
+        }
+
+        select {
+            padding: 8px;
+            font-size: 16px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
         .footer {
             text-align: center;
             font-size: 0.8em;
@@ -88,11 +88,11 @@
         /* Handy-Ansicht */
         @media (max-width: 768px) {
             h1 { font-size: 1.2em; }
-            .info-box select { font-size: 14px; }
             .controls button {
                 font-size: 12px;
                 padding: 6px 10px;
             }
+            .info-box select { font-size: 14px; }
         }
 
         /* Desktop */
@@ -110,18 +110,18 @@
         <img id="currentImg" src="" alt="Kein Bild geladen">
     </div>
 
-    <!-- Tag-Auswahl unter dem Bild -->
+    <div class="controls">
+        <button onclick="prevImage()">⏮ Zurück</button>
+        <button onclick="toggleSlideshow()">▶️/⏸ Slideshow</button>
+        <button onclick="nextImage()">⏭ Weiter</button>
+    </div>
+
+    <!-- Tag-Auswahl jetzt unter den Buttons -->
     <div class="info-box">
         <label for="daySelect">Tag auswählen:</label><br>
         <select id="daySelect" onchange="loadDay(this.value)">
             <option value="">-- bitte wählen --</option>
         </select>
-    </div>
-
-    <div class="controls">
-        <button onclick="prevImage()">⏮ Zurück</button>
-        <button onclick="toggleSlideshow()">▶️/⏸ Slideshow</button>
-        <button onclick="nextImage()">⏭ Weiter</button>
     </div>
 
     <div class="footer">
