@@ -10,7 +10,7 @@ on:
     - cron: "*/5 7-18 * 11,12,1,2 *"        # alle 5 Minuten 08:00–19:55 MEZ
     - cron: "5 18 * 11,12,1,2 *"            # 20:05 MEZ
 
-    workflow_dispatch:                      # manuelles Starten möglich
+  workflow_dispatch:                        # manuelles Starten möglich
 
 concurrency:
   group: webcam-archive
