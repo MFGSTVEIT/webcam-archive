@@ -1,14 +1,14 @@
 name: Fetch Webcam Image
 
 on:
-  schedule:
+  #schedule:
     # 🌞 Sommerzeit (März–Oktober, UTC+2)
-    - cron: "*/5 6-17 * 3,4,5,6,7,8,9,10 *"  # alle 5 Minuten 08:00–19:55 MESZ
-    - cron: "5 17 * 3,4,5,6,7,8,9,10 *"     # 20:05 MESZ
+    #- cron: "*/5 6-17 * 3,4,5,6,7,8,9,10 *"  # alle 5 Minuten 08:00–19:55 MESZ
+    #- cron: "5 17 * 3,4,5,6,7,8,9,10 *"     # 20:05 MESZ
 
     # ❄️ Winterzeit (November–Februar, UTC+1)
-    - cron: "*/5 7-18 * 11,12,1,2 *"        # alle 5 Minuten 08:00–19:55 MEZ
-    - cron: "5 18 * 11,12,1,2 *"            # 20:05 MEZ
+    #- cron: "*/5 7-18 * 11,12,1,2 *"        # alle 5 Minuten 08:00–19:55 MEZ
+    #- cron: "5 18 * 11,12,1,2 *"            # 20:05 MEZ
 
   workflow_dispatch:                        # manuelles Starten möglich
 
