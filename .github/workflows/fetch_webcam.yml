@@ -2,8 +2,15 @@ name: Fetch Webcam Image
 
 on:
   schedule:
-    - cron: "5,20,35,50 8-19 * * *"   # alle 15 Minuten zwischen 08:05 und 19:50
-  workflow_dispatch:                  # manuelles Starten möglich
+    # 🌞 Sommerzeit (März–Oktober, UTC+2)
+    - cron: "5,20,35,50 6-17 * 3-10 *"   # 08:05–19:50 MESZ
+    - cron: "5 18 * 3-10 *"              # 20:05 MESZ
+
+    # ❄️ Winterzeit (November–Februar, UTC+1)
+    - cron: "5,20,35,50 7-18 * 11-2 *"   # 08:05–19:50 MEZ
+    - cron: "5 19 * 11-2 *"              # 20:05 MEZ
+
+  workflow_dispatch:                      # manuelles Starten möglich
 
 concurrency:
   group: webcam-archive
@@ -14,7 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
 
     steps:
       - name: Checkout Repo (vollständige History)
