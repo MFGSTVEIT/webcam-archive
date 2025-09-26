@@ -1,0 +1,75 @@
+name: Purge old deployments
+
+# manuell oder wöchentlich
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 3 * * 0"   # Sonntags 03:00 UTC
+
+# Damit wir Deployments löschen dürfen
+permissions:
+  deployments: write
+  contents: read
+
+jobs:
+  purge-deployments:
+    runs-on: ubuntu-latest
+    env:
+      RETENTION_DAYS: 30   # <-- hier anpassen: Deployments älter als X Tage löschen
+    steps:
+      - name: Purge deployments older than RETENTION_DAYS
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const perPage = 100;
+            const retentionDays = parseInt(process.env.RETENTION_DAYS || "30", 10);
+            const now = new Date();
+            let page = 1;
+            let totalDeleted = 0;
+
+            console.log(`🔎 Prüfe Deployments (Retentionszeit ${retentionDays} Tage)`);
+
+            while (true) {
+              const resp = await github.rest.repos.listDeployments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: perPage,
+                page: page
+              });
+
+              const deployments = resp.data;
+              if (!deployments || deployments.length === 0) {
+                break;
+              }
+
+              for (const dep of deployments) {
+                // fallback: falls created_at nicht vorhanden, skippen
+                if (!dep.created_at) {
+                  console.log(`⚠️ Deployment ${dep.id} hat kein created_at - überspringe`);
+                  continue;
+                }
+
+                const created = new Date(dep.created_at);
+                const ageDays = Math.floor((now - created) / (1000 * 60 * 60 * 24));
+
+                if (ageDays > retentionDays) {
+                  console.log(`🗑 Lösche Deployment id=${dep.id}, ref=${dep.ref || "-"}, sha=${dep.sha || "-"}, erstellt=${dep.created_at} (${ageDays} Tage)`);
+                  try {
+                    await github.rest.repos.deleteDeployment({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      deployment_id: dep.id
+                    });
+                    totalDeleted++;
+                  } catch (err) {
+                    console.error(`❌ Fehler beim Löschen Deployment ${dep.id}: ${err}`);
+                  }
+                } else {
+                  console.log(`✅ Behalte Deployment id=${dep.id}, age=${ageDays} Tage`);
+                }
+              }
+
+              page++;
+            }
+
+            console.log(`Fertig. Insgesamt gelöscht: ${totalDeleted} deployments (älter als ${retentionDays} Tage).`);
