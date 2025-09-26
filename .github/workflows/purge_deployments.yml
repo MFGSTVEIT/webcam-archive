@@ -15,7 +15,7 @@ jobs:
   purge-deployments:
     runs-on: ubuntu-latest
     env:
-      RETENTION_DAYS: 30   # <-- hier anpassen: Deployments älter als X Tage löschen
+      RETENTION_DAYS: 5   # <-- hier anpassen: Deployments älter als X Tage löschen
     steps:
       - name: Purge deployments older than RETENTION_DAYS
         uses: actions/github-script@v7
