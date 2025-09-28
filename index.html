@@ -173,7 +173,7 @@
                 const res = await fetch(`images/${day}manifest.json`);
                 const data = await res.json();
                 images = data.images.map(img => `images/${day}${img}`);
-                currentIndex = 0;
+                currentIndex = 0; // Start beim ersten Bild
                 showImage();
                 const lastUpdate = new Date();
                 document.getElementById("lastUpdate").textContent =
@@ -193,12 +193,10 @@
 
         function nextImage() {
             if (images.length === 0) return;
-
             if (currentIndex < images.length - 1) {
                 currentIndex++;
                 showImage();
             } else {
-                // Slideshow beenden, wenn letztes Bild erreicht
                 if (slideshowInterval) {
                     clearInterval(slideshowInterval);
                     slideshowInterval = null;
@@ -212,6 +210,8 @@
             if (currentIndex > 0) {
                 currentIndex--;
                 showImage();
+            } else {
+                console.log("Anfang erreicht – kein weiteres Bild zurück");
             }
         }
 
