@@ -117,6 +117,7 @@
         <button onclick="toggleSlideshow()">▶️/⏸ Slideshow</button>
         <button onclick="nextImage()">⏭ Weiter</button>
         <button onclick="restartSlideshow()">↻ Neustart</button>
+        <button onclick="lastImage()">⏭ Zum letzten Bild</button>
     </div>
 
     <div class="info-box">
@@ -232,6 +233,17 @@
             }
             slideshowInterval = setInterval(nextImage, 2000);
             console.log("Slideshow neu gestartet");
+        }
+
+        function lastImage() {
+            if (images.length === 0) return;
+            currentIndex = images.length - 1;
+            showImage();
+            if (slideshowInterval) {
+                clearInterval(slideshowInterval);
+                slideshowInterval = null;
+            }
+            console.log("Zum letzten Bild gesprungen");
         }
 
         loadDays();
