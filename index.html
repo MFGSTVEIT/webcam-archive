@@ -13,7 +13,14 @@
   .controls button { padding:8px 14px; font-size:15px; border:none; border-radius:6px; background:#333; color:#fff; cursor:pointer;}
   .controls button[disabled] { background:#aaa; cursor:not-allowed; color:#333; }
   .info-box { background:#fff; padding:10px 14px; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.12); text-align:center; width:70%; max-width:480px; margin:10px auto;}
-  select { padding:8px; font-size:15px; border-radius:6px; border:1px solid #ccc; width:100%;}
+  select { 
+    padding:4px 6px; 
+    font-size:14px; 
+    border-radius:3px; 
+    border:1px solid #999; 
+    width:auto; 
+    min-width:160px; 
+  }
   .footer { text-align:center; font-size:0.85em; margin-top:10px; color:#444; display:flex; gap:12px; align-items:center;}
   #counter { font-weight:600; }
   @media (max-width:768px) {
@@ -49,7 +56,6 @@
   </div>
 
 <script>
-/* Robust slideshow — fixes für zuverlässiges Zurückblättern */
 let images = [];
 let currentIndex = 0;
 let slideshowInterval = null;
@@ -58,10 +64,8 @@ const SLIDE_MS = 2000;
 function setControlsState(){
   document.getElementById('btnPrev').disabled = (images.length === 0 || currentIndex === 0);
   document.getElementById('btnNext').disabled = (images.length === 0 || currentIndex >= images.length - 1);
-  // Restart und Last sind immer aktiv wenn Bilder da sind
   document.getElementById('btnRestart').disabled = (images.length === 0);
   document.getElementById('btnLast').disabled = (images.length === 0);
-  // Counter
   document.getElementById('counter').textContent = images.length === 0 ? '0 / 0' : `${currentIndex+1} / ${images.length}`;
 }
 
@@ -71,14 +75,12 @@ async function loadDays(){
     const data = await res.json();
     const daySelect = document.getElementById('daySelect');
     daySelect.innerHTML = '<option value="">-- bitte wählen --</option>';
-    // Fill options (use order from manifest; it's ok)
     data.days.forEach(d => {
       const opt = document.createElement('option');
       opt.value = d + '/';
       opt.textContent = d;
       daySelect.appendChild(opt);
     });
-    // Default: if today exists choose it, else choose first entry
     const today = new Date();
     const cur = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}/`;
     if (data.days.includes(cur.slice(0,-1))) {
@@ -99,17 +101,11 @@ async function loadDay(day){
   try {
     const res = await fetch(`images/${day}manifest.json`);
     const data = await res.json();
-
-    // -- Sicherstellen: sortiere die Dateinamen aufsteigend (numerisch falls möglich)
     const sorted = data.images.slice().sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
     images = sorted.map(f => `images/${day}${f}`);
-
-    // START mit ERSTEM Bild (ältestes) — wie gewünscht
     currentIndex = 0;
-
     showImage();
     setControlsState();
-
     document.getElementById('lastUpdate').textContent = `Aktualisiert am ${new Date().toLocaleString()}`;
   } catch(err){
     console.error('Fehler beim Laden der Bilder:', err);
@@ -125,15 +121,10 @@ function showImage(){
     imgEl.alt = 'Keine Bilder gefunden';
     return;
   }
-
-  // set src sofort — browser bricht vorherige Ladevorgänge ab, Klicks wirken sofort
   const url = images[currentIndex];
   imgEl.src = url;
   imgEl.alt = url.split('/').pop();
-
-  // optional: log to console for debug
   console.log(`showImage index=${currentIndex} file=${imgEl.alt}`);
-
   setControlsState();
 }
 
@@ -199,7 +190,6 @@ document.addEventListener('keydown', e => {
   if (e.key === ' ') toggleSlideshow();
 });
 
-// initial load
 loadDays();
 </script>
 </body>
