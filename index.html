@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>MFG-St.Veit Webcam Archiv</title>
     <style>
         body {
@@ -16,10 +16,7 @@
             box-sizing: border-box;
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
+        .header { text-align: center; margin-bottom: 20px; }
 
         h1 {
             color: #333;
@@ -56,9 +53,7 @@
             cursor: pointer;
         }
 
-        .controls button:hover {
-            background: #555;
-        }
+        .controls button:hover { background: #555; }
 
         .info-box {
             background: #ffffff;
@@ -79,25 +74,16 @@
             border: 1px solid #ccc;
         }
 
-        .footer {
-            text-align: center;
-            font-size: 0.8em;
-            margin-top: 10px;
-        }
+        .footer { text-align: center; font-size: 0.8em; margin-top: 10px; }
 
-        /* Handy */
         @media (max-width: 768px) {
             h1 { font-size: 1.2em; }
-            .controls button {
-                font-size: 12px;
-                padding: 6px 10px;
-            }
+            .controls button { font-size: 12px; padding: 6px 10px; }
             #slideshow img { margin: 5px auto; }
             .controls { margin: 2px; }
             .info-box select { font-size: 14px; }
         }
 
-        /* Desktop */
         @media (min-width: 1024px) {
             h1 { font-size: 2.0em; }
         }
@@ -113,11 +99,11 @@
     </div>
 
     <div class="controls">
-        <button onclick="prevImage()">⏮ Zurück</button>
-        <button onclick="toggleSlideshow()">▶️/⏸ Slideshow</button>
-        <button onclick="nextImage()">⏭ Weiter</button>
-        <button onclick="restartSlideshow()">↻ Neustart</button>
-        <button onclick="lastImage()">⏭ Zum letzten Bild</button>
+        <button id="btnPrev" onclick="prevImage()">⏮ Zurück</button>
+        <button id="btnToggle" onclick="toggleSlideshow()">▶️/⏸ Slideshow</button>
+        <button id="btnNext" onclick="nextImage()">⏭ Weiter</button>
+        <button id="btnRestart" onclick="restartSlideshow()">↻ Neustart</button>
+        <button id="btnLast" onclick="lastImage()">⏭ Zum letzten Bild</button>
     </div>
 
     <div class="info-box">
@@ -135,6 +121,7 @@
         let images = [];
         let currentIndex = 0;
         let slideshowInterval = null;
+        const SLIDE_MS = 2000; // Autoplay-Intervall in ms
 
         async function loadDays() {
             try {
@@ -142,12 +129,14 @@
                 const data = await res.json();
                 const daySelect = document.getElementById("daySelect");
 
+                // Heutiges Datum (als Vorschlag)
                 const today = new Date();
                 const yyyy = today.getFullYear();
                 const mm = String(today.getMonth() + 1).padStart(2, '0');
                 const dd = String(today.getDate()).padStart(2, '0');
                 const currentDay = `${yyyy}-${mm}-${dd}/`;
 
+                // Optionen füllen (ältester zuerst in manifest sollte bereits sortiert sein)
                 data.days.forEach(d => {
                     const option = document.createElement("option");
                     option.value = d + "/";
@@ -155,16 +144,24 @@
                     daySelect.appendChild(option);
                 });
 
-                if (data.days.includes(currentDay.slice(0, -1))) {
-                    daySelect.value = currentDay;
-                } else if (data.days.length > 0) {
-                    daySelect.value = data.days[0] + "/";
+                // Standard: ältester Tag auswählen = data.days[0] (manifest liefert nach Sorteinstellung)
+                if (data.days.length === 0) {
+                    daySelect.value = "";
+                } else {
+                    // falls heute existiert, wähle heute, sonst wähle neuesten (data.days[0] sollte nach deinem manifest sort-rev sein)
+                    if (data.days.includes(currentDay.slice(0, -1))) {
+                        daySelect.value = currentDay;
+                    } else {
+                        // wähle ersten Eintrag; manifest.json erstellt von Action ist sort-rev (neueste oben),
+                        // aber wir wollen beim ersten Bild starten -> wir laden den ausgewählten Tag und setzen index=0
+                        daySelect.value = data.days[0] + "/";
+                    }
                 }
 
                 loadDay(daySelect.value);
-
-            } catch(e) {
+            } catch (e) {
                 console.error("Fehler beim Laden der globalen manifest.json:", e);
+                document.getElementById("lastUpdate").textContent = "Fehler beim Laden der Tage.";
             }
         }
 
@@ -173,45 +170,59 @@
             try {
                 const res = await fetch(`images/${day}manifest.json`);
                 const data = await res.json();
+
+                // images array: data.images enthält Dateinamen in sortierter Reihenfolge (z.B. zeitlich aufsteigend)
                 images = data.images.map(img => `images/${day}${img}`);
-                currentIndex = 0; // Start beim ersten Bild
+
+                // START mit dem ERSTEN Bild (index 0)
+                currentIndex = 0;
                 showImage();
+
                 const lastUpdate = new Date();
                 document.getElementById("lastUpdate").textContent =
                     `Aktualisiert am ${lastUpdate.toLocaleString()}`;
-            } catch(e) {
+            } catch (e) {
                 console.error("Fehler beim Laden der Bilder:", e);
                 images = [];
                 document.getElementById("currentImg").src = "";
                 document.getElementById("currentImg").alt = "Keine Bilder gefunden";
+                document.getElementById("lastUpdate").textContent = "Keine Bilder gefunden";
             }
         }
 
         function showImage() {
-            if (images.length === 0) return;
-            document.getElementById("currentImg").src = images[currentIndex];
+            if (!images || images.length === 0) {
+                document.getElementById("currentImg").src = "";
+                document.getElementById("currentImg").alt = "Keine Bilder gefunden";
+                return;
+            }
+            const imgEl = document.getElementById("currentImg");
+            imgEl.src = images[currentIndex];
+            imgEl.alt = images[currentIndex].split('/').pop();
         }
 
         function nextImage() {
-            if (images.length === 0) return;
+            if (!images || images.length === 0) return;
             if (currentIndex < images.length - 1) {
                 currentIndex++;
                 showImage();
             } else {
+                // am Ende: Slideshow stoppen, kein Wrap
                 if (slideshowInterval) {
                     clearInterval(slideshowInterval);
                     slideshowInterval = null;
-                    console.log("Slideshow beendet – letztes Bild erreicht");
                 }
+                console.log("Slideshow beendet – letztes Bild erreicht");
             }
         }
 
         function prevImage() {
-            if (images.length === 0) return;
+            if (!images || images.length === 0) return;
             if (currentIndex > 0) {
                 currentIndex--;
                 showImage();
             } else {
+                // Anfang erreicht -> nichts tun
                 console.log("Anfang erreicht – kein weiteres Bild zurück");
             }
         }
@@ -220,32 +231,44 @@
             if (slideshowInterval) {
                 clearInterval(slideshowInterval);
                 slideshowInterval = null;
+                document.getElementById("btnToggle").textContent = "▶️/⏸ Slideshow";
             } else {
-                slideshowInterval = setInterval(nextImage, 2000);
+                // Wenn wir am Ende sind, zurück zum Anfang bevor Autoplay startet? Nein: starte ab aktuellem index
+                slideshowInterval = setInterval(nextImage, SLIDE_MS);
+                document.getElementById("btnToggle").textContent = "⏸/▶️ Stop";
             }
         }
 
         function restartSlideshow() {
+            if (!images || images.length === 0) return;
             currentIndex = 0;
             showImage();
-            if (slideshowInterval) {
-                clearInterval(slideshowInterval);
-            }
-            slideshowInterval = setInterval(nextImage, 2000);
-            console.log("Slideshow neu gestartet");
+            if (slideshowInterval) clearInterval(slideshowInterval);
+            slideshowInterval = setInterval(nextImage, SLIDE_MS);
+            document.getElementById("btnToggle").textContent = "⏸/▶️ Stop";
+            console.log("Slideshow neu gestartet (von vorne)");
         }
 
         function lastImage() {
-            if (images.length === 0) return;
+            if (!images || images.length === 0) return;
             currentIndex = images.length - 1;
             showImage();
             if (slideshowInterval) {
                 clearInterval(slideshowInterval);
                 slideshowInterval = null;
+                document.getElementById("btnToggle").textContent = "▶️/⏸ Slideshow";
             }
             console.log("Zum letzten Bild gesprungen");
         }
 
+        // optional: Tastatursteuerung (links/rechts)
+        document.addEventListener('keydown', (e) => {
+            if (e.key === "ArrowLeft") prevImage();
+            if (e.key === "ArrowRight") nextImage();
+            if (e.key === " ") toggleSlideshow();
+        });
+
+        // initial load
         loadDays();
     </script>
 </body>
