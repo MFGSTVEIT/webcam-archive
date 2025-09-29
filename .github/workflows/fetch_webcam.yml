@@ -2,15 +2,15 @@ name: Fetch Webcam Image
 
 on:
   #schedule:
-    # 🌞 Sommerzeit (März–Oktober, UTC+2)
-    #- cron: "*/5 6-17 * 3,4,5,6,7,8,9,10 *"  # alle 5 Minuten 08:00–19:55 MESZ
-    #- cron: "5 17 * 3,4,5,6,7,8,9,10 *"     # 20:05 MESZ
+    # Sommerzeit (März–Oktober, UTC+2)
+    #- cron: "*/5 6-17 * 3,4,5,6,7,8,9,10 *"
+    #- cron: "5 17 * 3,4,5,6,7,8,9,10 *"
 
-    # ❄️ Winterzeit (November–Februar, UTC+1)
-    #- cron: "*/5 7-18 * 11,12,1,2 *"        # alle 5 Minuten 08:00–19:55 MEZ
-    #- cron: "5 18 * 11,12,1,2 *"            # 20:05 MEZ
+    # Winterzeit (November–Februar, UTC+1)
+    #- cron: "*/5 7-18 * 11,12,1,2 *"
+    #- cron: "5 18 * 11,12,1,2 *"
 
-  workflow_dispatch:                        # manuelles Starten möglich
+  workflow_dispatch:
 
 concurrency:
   group: webcam-archive
@@ -23,7 +23,7 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout Repo (vollständige History)
+      - name: Checkout Repo
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
@@ -33,38 +33,46 @@ jobs:
           DATE=$(date +'%Y-%m-%d')
           echo "DATE=$DATE" >> $GITHUB_ENV
 
-      - name: Download current webcam.jpg and get real timestamp
+      - name: Download current webcam.jpg
         run: |
           URL="https://raw.githubusercontent.com/MFGSTVEIT/Webcam/master/webcam.jpg"
           TMP_IMG=$(mktemp /tmp/webcam-XXXX.jpg)
-          curl -s -o $TMP_IMG $URL
+          curl -s -o "$TMP_IMG" "$URL"
           echo "TMP_IMG=$TMP_IMG" >> $GITHUB_ENV
 
-          # Timestamp aus Last-Modified Header
-          LASTMOD=$(curl -sI $URL | grep -i '^last-modified:' | cut -d' ' -f2-)
-          if [ -z "$LASTMOD" ]; then
-            # fallback: aktuelle UTC Zeit
-            TIME=$(date -u +'%H%M')
-          else
-            TIME=$(date -u -d "$LASTMOD" +'%H%M')
+      - name: Extract upload timestamp from image
+        run: |
+          # Datum im Bild suchen
+          UPLOAD_DATE=$(strings "$TMP_IMG" | grep -oP "Automatischer Upload: \K[0-9-]{10} [0-9:]{8}" | tail -1)
+
+          if [ -z "$UPLOAD_DATE" ]; then
+            echo "❌ Kein eingebettetes Datum gefunden, breche ab."
+            exit 0
           fi
-          echo "TIME=$TIME" >> $GITHUB_ENV
-          echo "Real timestamp: $TIME from $LASTMOD"
+
+          DATE_PART=$(date -d "$UPLOAD_DATE" +%Y-%m-%d)
+          TIME_PART=$(date -d "$UPLOAD_DATE" +%H%M)
+
+          echo "UPLOAD_DATE=$UPLOAD_DATE" >> $GITHUB_ENV
+          echo "DATE=$DATE_PART" >> $GITHUB_ENV
+          echo "TIME=$TIME_PART" >> $GITHUB_ENV
+
+          echo "📸 Gefunden: $UPLOAD_DATE"
 
       - name: Check if image already exists
         run: |
           TARGET="images/$DATE/$TIME.jpg"
           if [ -f "$TARGET" ]; then
-            echo "Image $TARGET already exists – skipping commit."
+            echo "⚠️ Bild $TARGET existiert bereits – überspringe."
             exit 0
           fi
-          mkdir -p images/$DATE
-          mv $TMP_IMG "$TARGET"
-          echo "Saved new image: $TARGET"
+          mkdir -p "images/$DATE"
+          cp "$TMP_IMG" "$TARGET"
+          echo "✅ Neues Bild gespeichert: $TARGET"
 
-      - name: Cleanup Old Directories (older than 3 days)
+      - name: Cleanup Old Directories (older than 30 days)
         run: |
-          find images/ -type d -mtime +3 -exec rm -rf {} +
+          find images/ -maxdepth 1 -type d -mtime +30 -exec rm -rf {} +
 
       - name: Update daily manifests
         run: |
@@ -105,9 +113,8 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
           git add images
-          git commit -m "Add webcam image $DATE $TIME" || echo "No changes"
+          git commit -m "Add webcam image $UPLOAD_DATE" || echo "No changes"
 
-          # Push mit Retry
           for i in 1 2 3; do
             git pull --rebase origin main && git push origin HEAD:main && break
             echo "Push fehlgeschlagen, retry ($i/3)..."
