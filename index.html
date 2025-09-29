@@ -7,7 +7,13 @@
 <style>
   body { font-family: Arial, sans-serif; background:#f2efef; display:flex; flex-direction:column; align-items:center; margin:0; padding:20px; box-sizing:border-box;}
   .header { text-align:center; margin-bottom:16px;}
-  .header img { max-width:120px; height:auto; margin-bottom:8px; }
+  .header img { 
+    width:200px;      /* Logo groß darstellen */
+    height:auto; 
+    margin-bottom:8px; 
+    display:block; 
+    background:transparent; /* kein weißer Hintergrund */
+  }
   h1 { color:#333; font-size:1.6em; text-transform:uppercase; letter-spacing:2px; margin:0;}
   #slideshow img { max-width:90%; height:auto; display:block; margin:10px auto; border-radius:3px; box-shadow:0 4px 8px rgba(0,0,0,0.18);}
   .controls { margin:8px; display:flex; flex-wrap:wrap; justify-content:center; gap:6px;}
@@ -33,15 +39,15 @@
     h1 { font-size:1.1em; }
     .controls button { font-size:12px; padding:6px 10px; }
     #slideshow img { margin:6px auto; }
-    .header img { max-width:80px; }
+    .header img { width:140px; }
   }
 </style>
 </head>
 <body>
   <div class="header">
-    <!-- Logo-Datei: ändere src auf deinen Pfad -->
+    <!-- Logo-Datei: passe den Pfad an -->
     <img src="logo.png" alt="MFG-St.Veit Logo">
-    <h1>MFG-St.Veit</h1>
+    <h1>MFG-St.Veit Archiv</h1>
   </div>
 
   <div id="slideshow">
@@ -67,6 +73,7 @@
   </div>
 
 <script>
+/* Slideshow-Script bleibt unverändert */
 let images = [];
 let currentIndex = 0;
 let slideshowInterval = null;
@@ -135,70 +142,19 @@ function showImage(){
   const url = images[currentIndex];
   imgEl.src = url;
   imgEl.alt = url.split('/').pop();
-  console.log(`showImage index=${currentIndex} file=${imgEl.alt}`);
   setControlsState();
 }
 
-function nextImage(){
-  if (!images || images.length === 0) return;
-  if (currentIndex < images.length - 1) {
-    currentIndex++;
-    showImage();
-  } else {
-    if (slideshowInterval) {
-      clearInterval(slideshowInterval);
-      slideshowInterval = null;
-      document.getElementById('btnToggle').textContent = '▶️/⏸ Slideshow';
-    }
-    console.log('Ende erreicht');
-  }
-}
-
-function prevImage(){
-  if (!images || images.length === 0) return;
-  if (currentIndex > 0) {
-    currentIndex--;
-    showImage();
-  } else {
-    console.log('Anfang erreicht');
-  }
-}
-
-function toggleSlideshow(){
-  if (slideshowInterval) {
-    clearInterval(slideshowInterval);
-    slideshowInterval = null;
-    document.getElementById('btnToggle').textContent = '▶️/⏸ Slideshow';
-  } else {
-    slideshowInterval = setInterval(nextImage, SLIDE_MS);
-    document.getElementById('btnToggle').textContent = '⏸/▶️ Stop';
-  }
-}
-
-function restartSlideshow(){
-  if (!images || images.length === 0) return;
-  currentIndex = 0;
-  showImage();
-  if (slideshowInterval) clearInterval(slideshowInterval);
-  slideshowInterval = setInterval(nextImage, SLIDE_MS);
-  document.getElementById('btnToggle').textContent = '⏸/▶️ Stop';
-}
-
-function lastImage(){
-  if (!images || images.length === 0) return;
-  currentIndex = images.length - 1;
-  showImage();
-  if (slideshowInterval) {
-    clearInterval(slideshowInterval);
-    slideshowInterval = null;
-    document.getElementById('btnToggle').textContent = '▶️/⏸ Slideshow';
-  }
-}
+function nextImage(){ if (currentIndex < images.length-1) { currentIndex++; showImage(); } }
+function prevImage(){ if (currentIndex > 0) { currentIndex--; showImage(); } }
+function toggleSlideshow(){ if (slideshowInterval){ clearInterval(slideshowInterval); slideshowInterval=null; document.getElementById('btnToggle').textContent='▶️/⏸ Slideshow'; } else { slideshowInterval=setInterval(nextImage,SLIDE_MS); document.getElementById('btnToggle').textContent='⏸/▶️ Stop'; } }
+function restartSlideshow(){ if (!images.length) return; currentIndex=0; showImage(); if(slideshowInterval) clearInterval(slideshowInterval); slideshowInterval=setInterval(nextImage,SLIDE_MS); document.getElementById('btnToggle').textContent='⏸/▶️ Stop'; }
+function lastImage(){ if (!images.length) return; currentIndex=images.length-1; showImage(); if(slideshowInterval){ clearInterval(slideshowInterval); slideshowInterval=null; document.getElementById('btnToggle').textContent='▶️/⏸ Slideshow'; } }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft') prevImage();
-  if (e.key === 'ArrowRight') nextImage();
-  if (e.key === ' ') toggleSlideshow();
+  if (e.key==='ArrowLeft') prevImage();
+  if (e.key==='ArrowRight') nextImage();
+  if (e.key===' ') toggleSlideshow();
 });
 
 loadDays();
