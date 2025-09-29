@@ -7,16 +7,17 @@
 <style>
   body { font-family: Arial, sans-serif; background:#f2efef; display:flex; flex-direction:column; align-items:center; margin:0; padding:20px; box-sizing:border-box;}
   .header { text-align:center; margin-bottom:16px;}
+  .header img { max-width:120px; height:auto; margin-bottom:8px; }
   h1 { color:#333; font-size:1.6em; text-transform:uppercase; letter-spacing:2px; margin:0;}
   #slideshow img { max-width:90%; height:auto; display:block; margin:10px auto; border-radius:3px; box-shadow:0 4px 8px rgba(0,0,0,0.18);}
   .controls { margin:8px; display:flex; flex-wrap:wrap; justify-content:center; gap:6px;}
   .controls button { padding:8px 14px; font-size:15px; border:none; border-radius:6px; background:#333; color:#fff; cursor:pointer;}
   .controls button[disabled] { background:#aaa; cursor:not-allowed; color:#333; }
 
-  /* ---- kompakter Rahmen um Select ---- */
+  /* kompakter Rahmen um Select */
   .info-box { 
     background:#fff; 
-    padding:8px 10px; 
+    padding:6px 10px; 
     border-radius:6px; 
     box-shadow:0 2px 4px rgba(0,0,0,0.1); 
     text-align:center; 
@@ -32,11 +33,16 @@
     h1 { font-size:1.1em; }
     .controls button { font-size:12px; padding:6px 10px; }
     #slideshow img { margin:6px auto; }
+    .header img { max-width:80px; }
   }
 </style>
 </head>
 <body>
-  <div class="header"><h1>MFG-St.Veit</h1></div>
+  <div class="header">
+    <!-- Logo-Datei: ändere src auf deinen Pfad -->
+    <img src="logo.png" alt="MFG-St.Veit Logo">
+    <h1>MFG-St.Veit</h1>
+  </div>
 
   <div id="slideshow">
     <img id="currentImg" src="" alt="Kein Bild geladen">
