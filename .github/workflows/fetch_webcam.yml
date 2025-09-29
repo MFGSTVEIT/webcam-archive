@@ -1,9 +1,7 @@
 name: Fetch Webcam Image
 
 on:
-  workflow_dispatch:   # manuell starten
-  #schedule:           # kannst du wieder aktivieren
-  #  - cron: "*/15 * * * *"
+  workflow_dispatch:
 
 jobs:
   fetch:
@@ -17,62 +15,38 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Download webcam.jpg
+      - name: Get latest commit date of webcam.jpg
+        id: commitinfo
         run: |
-          URL="https://raw.githubusercontent.com/MFGSTVEIT/Webcam/master/webcam.jpg"
-          TMP_IMG=$(mktemp /tmp/webcam-XXXX.jpg)
-          curl -s -o "$TMP_IMG" "$URL"
-          echo "TMP_IMG=$TMP_IMG" >> $GITHUB_ENV
+          API_URL="https://api.github.com/repos/MFGSTVEIT/Webcam/commits?path=webcam.jpg&per_page=1"
+          JSON=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "$API_URL")
 
-      - name: Extract upload date from image
-        id: extract
-        run: |
-          TMP_IMG="${{ env.TMP_IMG }}"
+          COMMIT_DATE=$(echo "$JSON" | jq -r '.[0].commit.committer.date')
+          echo "Commit date: $COMMIT_DATE"
 
-          LINE=$(strings "$TMP_IMG" | grep -i "Automatischer Upload" | tail -n1 || true)
-          echo "Found line: $LINE"
+          DATE_PART=$(date -d "$COMMIT_DATE" +%Y-%m-%d)
+          TIME_PART=$(date -d "$COMMIT_DATE" +%H%M)
+          TS=$(date -d "$COMMIT_DATE" +%s)
 
-          if [ -z "$LINE" ]; then
-            echo "No upload line found in image."
-            echo "ok=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Beispiel: Automatischer Upload: 2025-09-29 09:45:08
-          UPLOAD_DATE=$(echo "$LINE" | sed -E 's/.*([0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}).*/\1/')
-
-          if ! date -d "$UPLOAD_DATE" >/dev/null 2>&1; then
-            echo "Invalid date: $UPLOAD_DATE"
-            echo "ok=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          TS=$(date -d "$UPLOAD_DATE" +%s)
-          DATE_PART=$(date -d "$UPLOAD_DATE" +%Y-%m-%d)
-          TIME_PART=$(date -d "$UPLOAD_DATE" +%H%M)
-
-          echo "UPLOAD_DATE=$UPLOAD_DATE"
-          echo "DATE_PART=$DATE_PART"
-          echo "TIME_PART=$TIME_PART"
-          echo "TS=$TS"
-
-          echo "ok=true" >> $GITHUB_OUTPUT
           echo "date_part=$DATE_PART" >> $GITHUB_OUTPUT
           echo "time_part=$TIME_PART" >> $GITHUB_OUTPUT
           echo "ts=$TS" >> $GITHUB_OUTPUT
 
-      - name: Save if newer
-        if: steps.extract.outputs.ok == 'true'
+      - name: Download webcam.jpg
         run: |
-          DATE_PART="${{ steps.extract.outputs.date_part }}"
-          TIME_PART="${{ steps.extract.outputs.time_part }}"
-          TS="${{ steps.extract.outputs.ts }}"
-          TMP_IMG="${{ env.TMP_IMG }}"
+          URL="https://raw.githubusercontent.com/MFGSTVEIT/Webcam/master/webcam.jpg"
+          curl -s -o webcam.jpg "$URL"
+
+      - name: Save if newer
+        run: |
+          DATE_PART="${{ steps.commitinfo.outputs.date_part }}"
+          TIME_PART="${{ steps.commitinfo.outputs.time_part }}"
+          TS="${{ steps.commitinfo.outputs.ts }}"
 
           ARCH_DIR="images/$DATE_PART"
           mkdir -p "$ARCH_DIR"
 
-          # neuestes archiviertes Bild in diesem Ordner finden
+          # letztes Bild in diesem Ordner finden
           LAST_TS=0
           for f in "$ARCH_DIR"/*.jpg; do
             [ -f "$f" ] || continue
@@ -84,16 +58,16 @@ jobs:
           done
 
           echo "Latest archived TS: $LAST_TS"
-          echo "Current upload TS: $TS"
+          echo "New TS: $TS"
 
           if [ "$TS" -le "$LAST_TS" ]; then
-            echo "No new image (upload not newer)."
+            echo "No new image – skipping"
             exit 0
           fi
 
           TARGET="$ARCH_DIR/$TIME_PART.jpg"
-          cp "$TMP_IMG" "$TARGET"
-          echo "Saved new image $TARGET"
+          cp webcam.jpg "$TARGET"
+          echo "Saved new image: $TARGET"
 
       - name: Update manifests
         run: |
@@ -120,12 +94,12 @@ jobs:
           echo "  ]" >> images/manifest.json
           echo "}" >> images/manifest.json
 
-      - name: Commit and push
+      - name: Commit and Push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add images
-          git commit -m "Add webcam image ${{ steps.extract.outputs.date_part }} ${{ steps.extract.outputs.time_part }}" || exit 0
+          git commit -m "Add webcam image ${{ steps.commitinfo.outputs.date_part }} ${{ steps.commitinfo.outputs.time_part }}" || exit 0
           git push
