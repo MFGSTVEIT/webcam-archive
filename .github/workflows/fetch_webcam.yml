@@ -1,16 +1,7 @@
 name: Fetch Webcam Image
 
 on:
-  #schedule:
-    # Sommerzeit (März–Oktober, UTC+2)
-    #- cron: "*/5 6-17 * 3,4,5,6,7,8,9,10 *"
-    #- cron: "5 17 * 3,4,5,6,7,8,9,10 *"
-
-    # Winterzeit (November–Februar, UTC+1)
-    #- cron: "*/5 7-18 * 11,12,1,2 *"
-    #- cron: "5 18 * 11,12,1,2 *"
-
-  workflow_dispatch:    # manuelles Starten möglich
+  workflow_dispatch:
 
 concurrency:
   group: webcam-archive
@@ -23,15 +14,10 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repo (vollständige History)
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
-      - name: Set Date Variable
-        run: |
-          DATE=$(date +'%Y-%m-%d')
-          echo "DATE=$DATE" >> $GITHUB_ENV
 
       - name: Download current webcam.jpg
         run: |
@@ -39,36 +25,93 @@ jobs:
           TMP_IMG=$(mktemp /tmp/webcam-XXXX.jpg)
           curl -s -o "$TMP_IMG" "$URL"
           echo "TMP_IMG=$TMP_IMG" >> $GITHUB_ENV
+          ls -l "$TMP_IMG"
 
-      - name: Extract upload timestamp from image
+      - name: Extract embedded upload timestamp
+        id: extract
         run: |
-          # Datum im Bild suchen
-          UPLOAD_DATE=$(strings "$TMP_IMG" | grep -oP "Automatischer Upload: \K[0-9-]{10} [0-9:]{8}" | tail -1)
+          TMP_IMG="${{ env.TMP_IMG }}"
+          # Suche die Zeile mit "Automatischer Upload" (binary-safe)
+          UPLOAD_LINE=$(strings "$TMP_IMG" | grep -i -m1 "Automatischer Upload" || true)
+          echo "Found line: '$UPLOAD_LINE'"
 
-          if [ -z "$UPLOAD_DATE" ]; then
-            echo "❌ Kein eingebettetes Datum gefunden, breche ab."
+          if [ -z "$UPLOAD_LINE" ]; then
+            echo "no_upload_line=true" >> $GITHUB_OUTPUT
+            echo "No embedded upload line found."
             exit 0
           fi
 
-          DATE_PART=$(date -d "$UPLOAD_DATE" +%Y-%m-%d)
-          TIME_PART=$(date -d "$UPLOAD_DATE" +%H%M)
+          # Extrahiere Datum im Format YYYY-MM-DD HH:MM:SS
+          # Beispielzeile: "Automatischer Upload: 2025-09-29 09:45:08"
+          UPLOAD_DATE=$(echo "$UPLOAD_LINE" | sed -E 's/.*Automatischer Upload[: ]*([0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]][0-9]{2}:[0-9]{2}:[0-9]{2}).*/\1/')
 
-          echo "UPLOAD_DATE=$UPLOAD_DATE" >> $GITHUB_ENV
-          echo "DATE=$DATE_PART" >> $GITHUB_ENV
-          echo "TIME=$TIME_PART" >> $GITHUB_ENV
+          # Validierung mit date
+          if ! date -d "$UPLOAD_DATE" >/dev/null 2>&1; then
+            echo "invalid_date=true" >> $GITHUB_OUTPUT
+            echo "Extracted date is invalid: '$UPLOAD_DATE'"
+            exit 0
+          fi
 
-          echo "📸 Gefunden: $UPLOAD_DATE"
+          # Normalisiere Datumsteile
+          UPLOAD_TS=$(date -d "$UPLOAD_DATE" +%s)
+          DATE_PART=$(date -d "@$UPLOAD_TS" +%Y-%m-%d)
+          TIME_HHMM=$(date -d "@$UPLOAD_TS" +%H%M)
 
-      - name: Check if image already exists
+          echo "UPLOAD_DATE=$UPLOAD_DATE" >> $GITHUB_OUTPUT
+          echo "UPLOAD_TS=$UPLOAD_TS" >> $GITHUB_OUTPUT
+          echo "DATE_PART=$DATE_PART" >> $GITHUB_OUTPUT
+          echo "TIME_HHMM=$TIME_HHMM" >> $GITHUB_OUTPUT
+          echo "ok=true" >> $GITHUB_OUTPUT
+          echo "Found upload timestamp: $UPLOAD_DATE (ts=$UPLOAD_TS -> $DATE_PART/$TIME_HHMM.jpg)"
+
+      - name: Decide & copy if newer
+        if: steps.extract.outputs.ok == 'true'
         run: |
-          TARGET="images/$DATE/$TIME.jpg"
+          TMP_IMG="${{ env.TMP_IMG }}"
+          UPLOAD_TS=${{ steps.extract.outputs.UPLOAD_TS }}
+          DATE_PART=${{ steps.extract.outputs.DATE_PART }}
+          TIME_HHMM=${{ steps.extract.outputs.TIME_HHMM }}
+
+          ARCH_DIR="images/$DATE_PART"
+          mkdir -p "$ARCH_DIR"
+
+          # bestimme aktuellen höchst-Timestamp im Ordner (aus Dateinamen HHMM)
+          MAX_TS=0
+          for f in "$ARCH_DIR"/*.jpg; do
+            [ -e "$f" ] || continue
+            base=$(basename "$f" .jpg)
+            # nur wenn name 4 Zeichen (HHMM)
+            if [[ "${#base}" -ge 3 ]]; then
+              HH=${base:0:2}
+              MM=${base:2:2}
+              # Falls Filename hat Sekunden oder längeres Format, versuchen robust zu parsen
+              # Wir bauen YYYY-MM-DD HH:MM:00
+              file_ts=$(date -d "$DATE_PART $HH:$MM:00" +%s 2>/dev/null || echo 0)
+              if [ "$file_ts" -gt "$MAX_TS" ]; then
+                MAX_TS=$file_ts
+              fi
+            fi
+          done
+
+          echo "Max saved timestamp in $ARCH_DIR = $MAX_TS"
+
+          if [ "$UPLOAD_TS" -le "$MAX_TS" ]; then
+            echo "Skipping: embedded upload timestamp ($UPLOAD_TS) is not newer than latest saved ($MAX_TS)"
+            exit 0
+          fi
+
+          # Zielname (HHMM.jpg)
+          TARGET="$ARCH_DIR/$TIME_HHMM.jpg"
+
+          # Falls eine Datei mit diesem Namen existiert (selten), hänge Sekunden an
           if [ -f "$TARGET" ]; then
-            echo "⚠️ Bild $TARGET existiert bereits – überspringe."
-            exit 0
+            SUFFIX=$(date -d "@$UPLOAD_TS" +%s)
+            TARGET="$ARCH_DIR/${TIME_HHMM}_${SUFFIX}.jpg"
           fi
-          mkdir -p "images/$DATE"
+
           cp "$TMP_IMG" "$TARGET"
-          echo "✅ Neues Bild gespeichert: $TARGET"
+          echo "Saved new image: $TARGET"
+          echo "TARGET=$TARGET" >> $GITHUB_ENV
 
       - name: Cleanup Old Directories (older than 30 days)
         run: |
@@ -105,18 +148,17 @@ jobs:
           echo "  ]" >> images/manifest.json
           echo "}" >> images/manifest.json
 
-      - name: Commit and Push Changes
+      - name: Commit and Push Changes (only if new image was saved)
+        if: env.TARGET != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
           git add images
-          git commit -m "Add webcam image $UPLOAD_DATE" || echo "No changes"
-
+          git commit -m "Add webcam image $DATE_PART $TIME_HHMM (from embedded $UPLOAD_DATE)" || echo "No changes"
           for i in 1 2 3; do
             git pull --rebase origin main && git push origin HEAD:main && break
-            echo "Push fehlgeschlagen, retry ($i/3)..."
+            echo "Push failed, retry ($i/3)..."
             sleep 5
           done
