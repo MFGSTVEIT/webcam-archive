@@ -1,275 +1,206 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>MFG-St.Veit Webcam Archiv</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f2efef;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
-        }
-
-        .header { text-align: center; margin-bottom: 20px; }
-
-        h1 {
-            color: #333;
-            font-size: 2.0em;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin: 0;
-        }
-
-        #slideshow img {
-            max-width: 90%;
-            height: auto;
-            display: block;
-            margin: 10px auto;
-            border-radius: 3px;
-            box-shadow: 0 4px 8px rgba(0,0,0,1.0);
-        }
-
-        .controls {
-            margin: 5px;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .controls button {
-            padding: 10px 20px;
-            margin: 5px;
-            font-size: 16px;
-            border: none;
-            border-radius: 5px;
-            background: #333;
-            color: white;
-            cursor: pointer;
-        }
-
-        .controls button:hover { background: #555; }
-
-        .info-box {
-            background: #ffffff;
-            padding: 10px 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.8);
-            text-align: center;
-            width: 60%;
-            max-width: 400px;
-            margin: 10px auto 20px auto;
-        }
-
-        select {
-            padding: 8px;
-            font-size: 16px;
-            margin-top: 5px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-
-        .footer { text-align: center; font-size: 0.8em; margin-top: 10px; }
-
-        @media (max-width: 768px) {
-            h1 { font-size: 1.2em; }
-            .controls button { font-size: 12px; padding: 6px 10px; }
-            #slideshow img { margin: 5px auto; }
-            .controls { margin: 2px; }
-            .info-box select { font-size: 14px; }
-        }
-
-        @media (min-width: 1024px) {
-            h1 { font-size: 2.0em; }
-        }
-    </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MFG-St.Veit Webcam Archiv</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#f2efef; display:flex; flex-direction:column; align-items:center; margin:0; padding:20px; box-sizing:border-box;}
+  .header { text-align:center; margin-bottom:16px;}
+  h1 { color:#333; font-size:1.6em; text-transform:uppercase; letter-spacing:2px; margin:0;}
+  #slideshow img { max-width:90%; height:auto; display:block; margin:10px auto; border-radius:3px; box-shadow:0 4px 8px rgba(0,0,0,0.18);}
+  .controls { margin:8px; display:flex; flex-wrap:wrap; justify-content:center; gap:6px;}
+  .controls button { padding:8px 14px; font-size:15px; border:none; border-radius:6px; background:#333; color:#fff; cursor:pointer;}
+  .controls button[disabled] { background:#aaa; cursor:not-allowed; color:#333; }
+  .info-box { background:#fff; padding:10px 14px; border-radius:8px; box-shadow:0 4px 8px rgba(0,0,0,0.12); text-align:center; width:70%; max-width:480px; margin:10px auto;}
+  select { padding:8px; font-size:15px; border-radius:6px; border:1px solid #ccc; width:100%;}
+  .footer { text-align:center; font-size:0.85em; margin-top:10px; color:#444; display:flex; gap:12px; align-items:center;}
+  #counter { font-weight:600; }
+  @media (max-width:768px) {
+    h1 { font-size:1.1em; }
+    .controls button { font-size:12px; padding:6px 10px; }
+    #slideshow img { margin:6px auto; }
+  }
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>MFG-St.Veit Archiv</h1>
-    </div>
+  <div class="header"><h1>MFG-St.Veit Archiv</h1></div>
 
-    <div id="slideshow">
-        <img id="currentImg" src="" alt="Kein Bild geladen">
-    </div>
+  <div id="slideshow">
+    <img id="currentImg" src="" alt="Kein Bild geladen">
+  </div>
 
-    <div class="controls">
-        <button id="btnPrev" onclick="prevImage()">⏮ Zurück</button>
-        <button id="btnToggle" onclick="toggleSlideshow()">▶️/⏸ Slideshow</button>
-        <button id="btnNext" onclick="nextImage()">⏭ Weiter</button>
-        <button id="btnRestart" onclick="restartSlideshow()">↻ Neustart</button>
-        <button id="btnLast" onclick="lastImage()">⏭ Zum letzten Bild</button>
-    </div>
+  <div class="controls">
+    <button id="btnPrev" onclick="prevImage()">⏮ Zurück</button>
+    <button id="btnToggle" onclick="toggleSlideshow()">▶️/⏸ Slideshow</button>
+    <button id="btnNext" onclick="nextImage()">⏭ Weiter</button>
+    <button id="btnRestart" onclick="restartSlideshow()">↻ Neustart</button>
+    <button id="btnLast" onclick="lastImage()">⏭ Zum letzten Bild</button>
+  </div>
 
-    <div class="info-box">
-        <label for="daySelect">Tag auswählen:</label><br>
-        <select id="daySelect" onchange="loadDay(this.value)">
-            <option value="">-- bitte wählen --</option>
-        </select>
-    </div>
+  <div class="info-box">
+    <label for="daySelect">Tag auswählen:</label><br>
+    <select id="daySelect" onchange="loadDay(this.value)"><option value="">-- bitte wählen --</option></select>
+  </div>
 
-    <div class="footer">
-        <p id="lastUpdate">Lade Bilder…</p>
-    </div>
+  <div class="footer">
+    <div id="lastUpdate">Lade Bilder…</div>
+    <div id="counter">0 / 0</div>
+  </div>
 
-    <script>
-        let images = [];
-        let currentIndex = 0;
-        let slideshowInterval = null;
-        const SLIDE_MS = 2000; // Autoplay-Intervall in ms
+<script>
+/* Robust slideshow — fixes für zuverlässiges Zurückblättern */
+let images = [];
+let currentIndex = 0;
+let slideshowInterval = null;
+const SLIDE_MS = 2000;
 
-        async function loadDays() {
-            try {
-                const res = await fetch("images/manifest.json");
-                const data = await res.json();
-                const daySelect = document.getElementById("daySelect");
+function setControlsState(){
+  document.getElementById('btnPrev').disabled = (images.length === 0 || currentIndex === 0);
+  document.getElementById('btnNext').disabled = (images.length === 0 || currentIndex >= images.length - 1);
+  // Restart und Last sind immer aktiv wenn Bilder da sind
+  document.getElementById('btnRestart').disabled = (images.length === 0);
+  document.getElementById('btnLast').disabled = (images.length === 0);
+  // Counter
+  document.getElementById('counter').textContent = images.length === 0 ? '0 / 0' : `${currentIndex+1} / ${images.length}`;
+}
 
-                // Heutiges Datum (als Vorschlag)
-                const today = new Date();
-                const yyyy = today.getFullYear();
-                const mm = String(today.getMonth() + 1).padStart(2, '0');
-                const dd = String(today.getDate()).padStart(2, '0');
-                const currentDay = `${yyyy}-${mm}-${dd}/`;
+async function loadDays(){
+  try {
+    const res = await fetch('images/manifest.json');
+    const data = await res.json();
+    const daySelect = document.getElementById('daySelect');
+    daySelect.innerHTML = '<option value="">-- bitte wählen --</option>';
+    // Fill options (use order from manifest; it's ok)
+    data.days.forEach(d => {
+      const opt = document.createElement('option');
+      opt.value = d + '/';
+      opt.textContent = d;
+      daySelect.appendChild(opt);
+    });
+    // Default: if today exists choose it, else choose first entry
+    const today = new Date();
+    const cur = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}/`;
+    if (data.days.includes(cur.slice(0,-1))) {
+      daySelect.value = cur;
+    } else if (data.days.length>0) {
+      daySelect.value = data.days[0] + '/';
+    }
+    await loadDay(daySelect.value);
+  } catch(err){
+    console.error('Error loading global manifest:', err);
+    document.getElementById('lastUpdate').textContent = 'Fehler beim Laden';
+    images = []; currentIndex = 0; setControlsState();
+  }
+}
 
-                // Optionen füllen (ältester zuerst in manifest sollte bereits sortiert sein)
-                data.days.forEach(d => {
-                    const option = document.createElement("option");
-                    option.value = d + "/";
-                    option.textContent = d;
-                    daySelect.appendChild(option);
-                });
+async function loadDay(day){
+  if (!day) return;
+  try {
+    const res = await fetch(`images/${day}manifest.json`);
+    const data = await res.json();
 
-                // Standard: ältester Tag auswählen = data.days[0] (manifest liefert nach Sorteinstellung)
-                if (data.days.length === 0) {
-                    daySelect.value = "";
-                } else {
-                    // falls heute existiert, wähle heute, sonst wähle neuesten (data.days[0] sollte nach deinem manifest sort-rev sein)
-                    if (data.days.includes(currentDay.slice(0, -1))) {
-                        daySelect.value = currentDay;
-                    } else {
-                        // wähle ersten Eintrag; manifest.json erstellt von Action ist sort-rev (neueste oben),
-                        // aber wir wollen beim ersten Bild starten -> wir laden den ausgewählten Tag und setzen index=0
-                        daySelect.value = data.days[0] + "/";
-                    }
-                }
+    // -- Sicherstellen: sortiere die Dateinamen aufsteigend (numerisch falls möglich)
+    const sorted = data.images.slice().sort((a,b) => a.localeCompare(b, undefined, {numeric:true, sensitivity:'base'}));
+    images = sorted.map(f => `images/${day}${f}`);
 
-                loadDay(daySelect.value);
-            } catch (e) {
-                console.error("Fehler beim Laden der globalen manifest.json:", e);
-                document.getElementById("lastUpdate").textContent = "Fehler beim Laden der Tage.";
-            }
-        }
+    // START mit ERSTEM Bild (ältestes) — wie gewünscht
+    currentIndex = 0;
 
-        async function loadDay(day) {
-            if (!day) return;
-            try {
-                const res = await fetch(`images/${day}manifest.json`);
-                const data = await res.json();
+    showImage();
+    setControlsState();
 
-                // images array: data.images enthält Dateinamen in sortierter Reihenfolge (z.B. zeitlich aufsteigend)
-                images = data.images.map(img => `images/${day}${img}`);
+    document.getElementById('lastUpdate').textContent = `Aktualisiert am ${new Date().toLocaleString()}`;
+  } catch(err){
+    console.error('Fehler beim Laden der Bilder:', err);
+    images = []; currentIndex = 0; showImage(); setControlsState();
+    document.getElementById('lastUpdate').textContent = 'Keine Bilder gefunden';
+  }
+}
 
-                // START mit dem ERSTEN Bild (index 0)
-                currentIndex = 0;
-                showImage();
+function showImage(){
+  const imgEl = document.getElementById('currentImg');
+  if (!images || images.length === 0) {
+    imgEl.src = '';
+    imgEl.alt = 'Keine Bilder gefunden';
+    return;
+  }
 
-                const lastUpdate = new Date();
-                document.getElementById("lastUpdate").textContent =
-                    `Aktualisiert am ${lastUpdate.toLocaleString()}`;
-            } catch (e) {
-                console.error("Fehler beim Laden der Bilder:", e);
-                images = [];
-                document.getElementById("currentImg").src = "";
-                document.getElementById("currentImg").alt = "Keine Bilder gefunden";
-                document.getElementById("lastUpdate").textContent = "Keine Bilder gefunden";
-            }
-        }
+  // set src sofort — browser bricht vorherige Ladevorgänge ab, Klicks wirken sofort
+  const url = images[currentIndex];
+  imgEl.src = url;
+  imgEl.alt = url.split('/').pop();
 
-        function showImage() {
-            if (!images || images.length === 0) {
-                document.getElementById("currentImg").src = "";
-                document.getElementById("currentImg").alt = "Keine Bilder gefunden";
-                return;
-            }
-            const imgEl = document.getElementById("currentImg");
-            imgEl.src = images[currentIndex];
-            imgEl.alt = images[currentIndex].split('/').pop();
-        }
+  // optional: log to console for debug
+  console.log(`showImage index=${currentIndex} file=${imgEl.alt}`);
 
-        function nextImage() {
-            if (!images || images.length === 0) return;
-            if (currentIndex < images.length - 1) {
-                currentIndex++;
-                showImage();
-            } else {
-                // am Ende: Slideshow stoppen, kein Wrap
-                if (slideshowInterval) {
-                    clearInterval(slideshowInterval);
-                    slideshowInterval = null;
-                }
-                console.log("Slideshow beendet – letztes Bild erreicht");
-            }
-        }
+  setControlsState();
+}
 
-        function prevImage() {
-            if (!images || images.length === 0) return;
-            if (currentIndex > 0) {
-                currentIndex--;
-                showImage();
-            } else {
-                // Anfang erreicht -> nichts tun
-                console.log("Anfang erreicht – kein weiteres Bild zurück");
-            }
-        }
+function nextImage(){
+  if (!images || images.length === 0) return;
+  if (currentIndex < images.length - 1) {
+    currentIndex++;
+    showImage();
+  } else {
+    if (slideshowInterval) {
+      clearInterval(slideshowInterval);
+      slideshowInterval = null;
+      document.getElementById('btnToggle').textContent = '▶️/⏸ Slideshow';
+    }
+    console.log('Ende erreicht');
+  }
+}
 
-        function toggleSlideshow() {
-            if (slideshowInterval) {
-                clearInterval(slideshowInterval);
-                slideshowInterval = null;
-                document.getElementById("btnToggle").textContent = "▶️/⏸ Slideshow";
-            } else {
-                // Wenn wir am Ende sind, zurück zum Anfang bevor Autoplay startet? Nein: starte ab aktuellem index
-                slideshowInterval = setInterval(nextImage, SLIDE_MS);
-                document.getElementById("btnToggle").textContent = "⏸/▶️ Stop";
-            }
-        }
+function prevImage(){
+  if (!images || images.length === 0) return;
+  if (currentIndex > 0) {
+    currentIndex--;
+    showImage();
+  } else {
+    console.log('Anfang erreicht');
+  }
+}
 
-        function restartSlideshow() {
-            if (!images || images.length === 0) return;
-            currentIndex = 0;
-            showImage();
-            if (slideshowInterval) clearInterval(slideshowInterval);
-            slideshowInterval = setInterval(nextImage, SLIDE_MS);
-            document.getElementById("btnToggle").textContent = "⏸/▶️ Stop";
-            console.log("Slideshow neu gestartet (von vorne)");
-        }
+function toggleSlideshow(){
+  if (slideshowInterval) {
+    clearInterval(slideshowInterval);
+    slideshowInterval = null;
+    document.getElementById('btnToggle').textContent = '▶️/⏸ Slideshow';
+  } else {
+    slideshowInterval = setInterval(nextImage, SLIDE_MS);
+    document.getElementById('btnToggle').textContent = '⏸/▶️ Stop';
+  }
+}
 
-        function lastImage() {
-            if (!images || images.length === 0) return;
-            currentIndex = images.length - 1;
-            showImage();
-            if (slideshowInterval) {
-                clearInterval(slideshowInterval);
-                slideshowInterval = null;
-                document.getElementById("btnToggle").textContent = "▶️/⏸ Slideshow";
-            }
-            console.log("Zum letzten Bild gesprungen");
-        }
+function restartSlideshow(){
+  if (!images || images.length === 0) return;
+  currentIndex = 0;
+  showImage();
+  if (slideshowInterval) clearInterval(slideshowInterval);
+  slideshowInterval = setInterval(nextImage, SLIDE_MS);
+  document.getElementById('btnToggle').textContent = '⏸/▶️ Stop';
+}
 
-        // optional: Tastatursteuerung (links/rechts)
-        document.addEventListener('keydown', (e) => {
-            if (e.key === "ArrowLeft") prevImage();
-            if (e.key === "ArrowRight") nextImage();
-            if (e.key === " ") toggleSlideshow();
-        });
+function lastImage(){
+  if (!images || images.length === 0) return;
+  currentIndex = images.length - 1;
+  showImage();
+  if (slideshowInterval) {
+    clearInterval(slideshowInterval);
+    slideshowInterval = null;
+    document.getElementById('btnToggle').textContent = '▶️/⏸ Slideshow';
+  }
+}
 
-        // initial load
-        loadDays();
-    </script>
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') prevImage();
+  if (e.key === 'ArrowRight') nextImage();
+  if (e.key === ' ') toggleSlideshow();
+});
+
+// initial load
+loadDays();
+</script>
 </body>
 </html>
