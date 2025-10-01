@@ -1,0 +1,20 @@
+name: Trigger Archive Update
+
+on:
+  push:
+    paths:
+      - "webcam.jpg"   # nur wenn dieses File geändert wird
+    branches:
+      - main           # oder dein Branch-Name
+
+jobs:
+  notify-archive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger webcam-archive workflow
+        run: |
+          curl -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.ARCHIVE_PAT }}" \
+            https://api.github.com/repos/MFGSTVEIT/webcam-archive/dispatches \
+            -d '{"event_type":"webcam-updated"}'
