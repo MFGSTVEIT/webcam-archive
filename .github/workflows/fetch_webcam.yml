@@ -1,7 +1,9 @@
 name: Fetch Webcam Image
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:   # manuell starten bleibt möglich
+  repository_dispatch:
+    types: [webcam-updated]
 
 jobs:
   fetch:
