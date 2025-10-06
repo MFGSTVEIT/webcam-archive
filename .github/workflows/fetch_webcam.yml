@@ -73,18 +73,19 @@ jobs:
 
       - name: Cleanup old directories
         run: |
-          KEEP_DAYS=7   # 🔹 hier Anzahl der Tage einstellen
-          echo "Keeping only the last $KEEP_DAYS days of images."
+          KEEP_COUNT=7
+          echo "Keeping only the last $KEEP_COUNT directories in images/"
 
-          find images -maxdepth 1 -type d -regex "images/[0-9]{4}-[0-9]{2}-[0-9]{2}" | while read dir; do
-            dirdate=$(basename "$dir")
-            if [[ "$dirdate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-              if [ $(date -d "$dirdate" +%s) -lt $(date -d "$KEEP_DAYS days ago" +%s) ]; then
-                echo "Removing old directory: $dir"
-                rm -rf "$dir"
-              fi
-            fi
-          done
+          cd images || exit 0
+          TOTAL=$(ls -1d 20* 2>/dev/null | wc -l)
+          echo "Found $TOTAL directories."
+
+          if [ "$TOTAL" -gt "$KEEP_COUNT" ]; then
+            echo "Removing older ones..."
+            ls -1d 20* | sort -r | tail -n +$((KEEP_COUNT+1)) | xargs rm -rf
+          else
+            echo "Nothing to delete."
+          fi
 
       - name: Update manifests
         run: |
