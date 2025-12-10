@@ -73,7 +73,7 @@ jobs:
 
       - name: Cleanup old directories
         run: |
-          KEEP_COUNT=14
+          KEEP_COUNT=10
           echo "Keeping only the last $KEEP_COUNT directories in images/"
 
           cd images || exit 0
